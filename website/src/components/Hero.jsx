@@ -4,46 +4,35 @@ const Hero = () => {
       id="hero"
       className="relative min-h-screen flex items-center bg-slate-900 overflow-hidden"
     >
-      {/* Subtle dot-grid background decoration */}
+      {/* Dot-grid background */}
       <div
         className="absolute inset-0 opacity-20"
         style={{
-          backgroundImage:
-            "radial-gradient(circle, #334155 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, #334155 1px, transparent 1px)",
           backgroundSize: "32px 32px",
         }}
       />
-      {/* Indigo glow blob */}
       <div className="absolute top-1/3 -left-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-32 pt-32">
         <div className="max-w-3xl">
-          {/* Greeting */}
           <p className="font-mono text-indigo-400 text-sm uppercase tracking-widest mb-6">
-            {/* TODO: Customize this greeting if you like */}
             Hello, world — I&apos;m
           </p>
 
-          {/* Name */}
-          {/* TODO: Replace "Your Name" with your actual name */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight mb-4">
-            Your Name
+            Smarth Kaul
           </h1>
 
-          {/* Title */}
-          {/* TODO: Replace with your actual title or role */}
           <h2 className="text-2xl sm:text-3xl font-semibold text-indigo-300 mb-6">
-            Software Engineer &amp; Creative Developer
+            Statistics &amp; Machine Learning Student
           </h2>
 
-          {/* Tagline */}
-          {/* TODO: Write your own 1–2 sentence tagline */}
           <p className="text-slate-400 text-lg leading-relaxed mb-10 max-w-xl">
-            I build elegant, performant web experiences — from pixel-perfect UI
-            to scalable backend systems. Currently open to new opportunities.
+            UofT Statistics specialist focused on machine learning and data science.
+            I turn messy datasets into decisions — through models, analysis, and clear communication.
           </p>
 
-          {/* CTAs */}
           <div className="flex flex-wrap gap-4 mb-14">
             <a
               href="#projects"
@@ -61,7 +50,7 @@ const Hero = () => {
 
           {/* Social icons */}
           <div className="flex items-center gap-5">
-            {/* TODO: Replace each href="#" with your actual profile URL */}
+            {/* TODO: Add your GitHub URL */}
             <a
               href="#"
               aria-label="GitHub"
@@ -74,7 +63,7 @@ const Hero = () => {
               </svg>
             </a>
             <a
-              href="#"
+              href="https://linkedin.com/in/smarth-kaul"
               aria-label="LinkedIn"
               className="text-slate-500 hover:text-indigo-400 transition-colors duration-200"
               target="_blank"
@@ -85,14 +74,12 @@ const Hero = () => {
               </svg>
             </a>
             <a
-              href="#"
-              aria-label="Twitter / X"
+              href="mailto:smarth.kaul@mail.utoronto.ca"
+              aria-label="Email"
               className="text-slate-500 hover:text-indigo-400 transition-colors duration-200"
-              target="_blank"
-              rel="noopener noreferrer"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </a>
           </div>
@@ -102,18 +89,8 @@ const Hero = () => {
       {/* Scroll hint */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-slate-600">
         <span className="text-xs tracking-widest uppercase font-mono">Scroll</span>
-        <svg
-          className="w-4 h-4 animate-bounce"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+        <svg className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
     </section>
