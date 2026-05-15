@@ -1,27 +1,21 @@
+import { useReveal } from "../hooks/useReveal";
+
 const PROJECTS = [
   {
-    title: "NCAA March Madness Prediction Model",
+    title: "NCAA March Madness\nPrediction Model",
     description:
-      "Built an ensemble ML model to predict NCAA tournament outcomes. Engineered features including seed differences, 14-day win rates, and adjusted season statistics to capture team strength and momentum. Ensemble predictions achieved a Brier Score of 0.1230 vs. a 0.1041 benchmark.",
-    tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn", "Feature Engineering"],
-    github: "#", // TODO: Add GitHub repo URL
-    featured: true,
+      "Ensemble ML model predicting tournament outcomes. Engineered features including seed differences, 14-day win rates, and adjusted season stats. Achieved a Brier Score of 0.1230 vs. 0.1041 benchmark.",
+    tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn"],
+    github: null,
   },
   {
-    title: "Energy Forecasting Model",
+    title: "Energy Forecasting\nModel",
     description:
-      "Built and optimized SARIMA and VAR time series models on 13+ years of monthly electricity data to forecast energy supply across Canada and the U.S. Applied seasonal differencing, stationarity testing (ADF), and Granger causality analysis to quantify interdependencies between energy sources.",
-    tech: ["R", "SARIMA", "VAR", "Time Series", "ACF/PACF", "Feature Engineering"],
-    github: "#", // TODO: Add GitHub repo URL
-    featured: true,
+      "SARIMA + VAR time series models on 13+ years of Canadian and US electricity data. Applied seasonal differencing, stationarity testing, and Granger causality analysis to quantify cross-source dependencies.",
+    tech: ["R", "SARIMA", "VAR", "Time Series"],
+    github: null,
   },
 ];
-
-const ExternalIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-  </svg>
-);
 
 const GitHubIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -29,70 +23,79 @@ const GitHubIcon = () => (
   </svg>
 );
 
-const Projects = () => {
+const ProjectCard = ({ project, idx }) => {
+  const [ref, visible] = useReveal();
+
   return (
-    <section id="projects" className="py-24 bg-slate-950">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-16">
-          <p className="font-mono text-indigo-400 text-xs uppercase tracking-widest mb-2">
-            03. Projects
+    <div
+      ref={ref}
+      className={`reveal ${visible ? "visible" : ""} py-10 border-t border-slate-800`}
+      style={{ transitionDelay: `${idx * 120}ms` }}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+        <div className="flex-1">
+          <h3
+            className="font-display font-extrabold text-white leading-tight mb-4 whitespace-pre-line"
+            style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}
+          >
+            {project.title}
+          </h3>
+          <p className="text-slate-400 leading-relaxed mb-6 max-w-xl">
+            {project.description}
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Things I&apos;ve Built</h2>
+          <div className="flex flex-wrap gap-2">
+            {project.tech.map((t) => (
+              <span
+                key={t}
+                className="font-mono text-xs text-violet-400 bg-violet-950/30 border border-violet-800/30 px-2.5 py-0.5 rounded-full"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+        {project.github && (
+          <a
+            href={project.github}
+            aria-label="GitHub repository"
+            className="text-slate-500 hover:text-white transition-colors shrink-0 mt-1"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <GitHubIcon />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const Projects = () => {
+  const [headerRef, headerVisible] = useReveal();
+
+  return (
+    <section id="projects" className="py-24 bg-slate-950 px-6 sm:px-12 lg:px-24">
+      <div className="max-w-3xl">
+        <div
+          ref={headerRef}
+          className={`reveal ${headerVisible ? "visible" : ""} mb-16`}
+        >
+          <p className="font-mono text-slate-500 text-xs uppercase tracking-widest mb-6">
+            Projects
+          </p>
+          <h2
+            className="font-display font-extrabold text-white leading-tight"
+            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
+          >
+            Things I&apos;ve built.
+          </h2>
         </div>
 
-        <div className="space-y-8">
+        <div>
           {PROJECTS.map((project, i) => (
-            <div
-              key={i}
-              className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors duration-300"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="font-mono text-indigo-400 text-xs uppercase tracking-widest mb-1">
-                    Featured Project
-                  </p>
-                  <h3 className="text-white font-bold text-xl">{project.title}</h3>
-                </div>
-                <div className="flex items-center gap-3 shrink-0 ml-4">
-                  <a
-                    href={project.github}
-                    aria-label="GitHub repository"
-                    className="text-slate-400 hover:text-indigo-400 transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <GitHubIcon />
-                  </a>
-                  {project.live && (
-                    <a
-                      href={project.live}
-                      aria-label="Live demo"
-                      className="text-slate-400 hover:text-indigo-400 transition-colors"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalIcon />
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              <p className="text-slate-400 leading-relaxed mb-5 max-w-2xl">
-                {project.description}
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {project.tech.map((t) => (
-                  <span
-                    key={t}
-                    className="font-mono text-indigo-300 text-xs bg-indigo-950/60 border border-indigo-800/50 px-2.5 py-1 rounded-full"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <ProjectCard key={i} project={project} idx={i} />
           ))}
+          <div className="border-t border-slate-800" />
         </div>
       </div>
     </section>

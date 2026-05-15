@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+/** @type {import("tailwindcss").Config} */
 export default {
   content: [
     "./index.html",
@@ -7,21 +7,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Inter is loaded via system stack — matches index.css font setting
+        display: ["Syne", "system-ui", "sans-serif"],
         sans: ["Inter", "system-ui", "Avenir", "Helvetica", "Arial", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
-      },
-      colors: {
-        // Indigo is already in Tailwind's palette; this is just for reference
-      },
-      animation: {
-        "fade-in": "fadeIn 0.5s ease-out",
-      },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
       },
     },
   },

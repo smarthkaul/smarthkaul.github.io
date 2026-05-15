@@ -1,104 +1,124 @@
+import { useState } from "react";
+import { useReveal } from "../hooks/useReveal";
+
 const EXPERIENCE = [
   {
     company: "Grant Thornton",
     url: "https://www.grantthornton.ca",
     role: "Business Consulting Intern",
-    period: "May 2024 – Aug 2024",
-    bullets: [
-      "Analyzed market and regulatory datasets across 5 client projects, synthesizing trends to support data-driven recommendations for decision-making.",
-      "Cleaned, structured, and analyzed import-export datasets in Excel, delivering outputs under tight timelines.",
-      "Communicated insights clearly in meetings and written deliverables to support client strategy discussions.",
-    ],
+    year: "2024",
+    summary:
+      "Analyzed market and regulatory datasets across 5 client projects, delivering data-driven insights for client strategy discussions.",
     tech: ["Excel", "Data Analysis", "Market Research"],
   },
   {
-    company: "Independent Electricity System Operator (IESO)",
+    company: "IESO",
     url: "https://www.ieso.ca",
     role: "Data Analyst Intern",
-    period: "Sept 2023 – Dec 2023",
-    bullets: [
-      "Built and executed 30+ SQL queries for Quality Assurance testing, improving the accuracy of email triggers in the Identity Access Management solution.",
-      "Streamlined 5 key IT processes for the distribution and use of Anaconda and Python, reducing deployment time by 25% and improving overall data services efficiency.",
-      "Completed 15 tasks focused on improving Identity Access Management processes, helping the team achieve 100% of quarterly OKRs.",
-    ],
-    tech: ["SQL", "Python", "Anaconda", "Identity Access Management"],
+    year: "2023",
+    summary:
+      "Built 30+ SQL queries for QA testing and streamlined 5 IT processes, reducing deployment time by 25%.",
+    tech: ["SQL", "Python", "Identity Access Management"],
   },
   {
     company: "TekUncorked",
     url: "https://www.tekuncorked.com/",
-    role: "Industrial Machine Learning Intern",
-    period: "May 2022 – Aug 2022",
-    bullets: [
-      "Developed a supervised learning model using Python, TensorFlow, and Keras to analyze household appliance energy consumption, enhancing accuracy and reliability of energy disaggregation.",
-      "Fine-tuned model architecture and hyperparameters, significantly reducing training time and enabling large-scale energy disaggregation.",
-      "Created detailed documentation for model architecture, data assumptions, and performance results, ensuring clarity for future maintenance.",
-    ],
-    tech: ["Python", "TensorFlow", "Keras", "Machine Learning"],
+    role: "Industrial ML Intern",
+    year: "2022",
+    summary:
+      "Developed a supervised learning model using TensorFlow and Keras for household energy disaggregation.",
+    tech: ["Python", "TensorFlow", "Keras"],
   },
 ];
 
-const Experience = () => {
+const ExperienceRow = ({ job, idx }) => {
+  const [open, setOpen] = useState(false);
+  const [ref, visible] = useReveal();
+
   return (
-    <section id="experience" className="py-24 bg-slate-900">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-16">
-          <p className="font-mono text-indigo-400 text-xs uppercase tracking-widest mb-2">
-            02. Experience
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Work Experience</h2>
+    <div
+      ref={ref}
+      className={`reveal ${visible ? "visible" : ""}`}
+      style={{ transitionDelay: `${idx * 80}ms` }}
+    >
+      <div
+        className="group py-6 border-t border-slate-800 cursor-pointer select-none"
+        onClick={() => setOpen((p) => !p)}
+      >
+        <div className="flex items-baseline justify-between gap-4">
+          <div className="flex items-baseline gap-5">
+            <span className="font-mono text-slate-600 text-xs w-5 shrink-0">
+              {String(idx + 1).padStart(2, "0")}
+            </span>
+            <div>
+              <a
+                href={job.url}
+                className="text-white text-lg font-semibold hover:text-violet-400 transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {job.company} ↗
+              </a>
+              <p className="text-slate-400 text-sm mt-0.5">{job.role}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="font-mono text-slate-500 text-sm">{job.year}</span>
+            <span className={`text-slate-600 text-xs transition-transform duration-200 ${open ? "rotate-180" : ""}`}>
+              ▾
+            </span>
+          </div>
         </div>
 
-        <div className="relative">
-          {/* Vertical timeline line */}
-          <div className="hidden md:block absolute left-0 top-2 bottom-2 w-px bg-slate-700" />
-
-          <div className="space-y-10">
-            {EXPERIENCE.map((job, i) => (
-              <div key={i} className="md:pl-10 relative">
-                {/* Timeline dot */}
-                <div className="hidden md:block absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-500 ring-4 ring-slate-900" />
-
-                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-indigo-500/40 transition-colors duration-300">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
-                    <div>
-                      <h3 className="text-white font-semibold text-lg">{job.role}</h3>
-                      <a
-                        href={job.url}
-                        className="text-indigo-400 hover:text-indigo-300 font-medium text-sm transition-colors"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {job.company} ↗
-                      </a>
-                    </div>
-                    <span className="font-mono text-slate-500 text-sm whitespace-nowrap">
-                      {job.period}
-                    </span>
-                  </div>
-
-                  <ul className="space-y-2 mb-5">
-                    {job.bullets.map((b, j) => (
-                      <li key={j} className="flex gap-2 text-slate-400 text-sm leading-relaxed">
-                        <span className="text-indigo-500 mt-1.5 shrink-0">▹</span>
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="flex flex-wrap gap-2">
-                    {job.tech.map((t) => (
-                      <span
-                        key={t}
-                        className="bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs px-2.5 py-1 rounded-full font-mono"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
+        {open && (
+          <div className="mt-4 ml-10">
+            <p className="text-slate-400 text-sm leading-relaxed mb-3">
+              {job.summary}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {job.tech.map((t) => (
+                <span
+                  key={t}
+                  className="font-mono text-xs text-violet-400 bg-violet-950/30 border border-violet-800/30 px-2.5 py-0.5 rounded-full"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
           </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const Experience = () => {
+  const [headerRef, headerVisible] = useReveal();
+
+  return (
+    <section id="experience" className="py-24 bg-slate-950 px-6 sm:px-12 lg:px-24">
+      <div className="max-w-3xl">
+        <div
+          ref={headerRef}
+          className={`reveal ${headerVisible ? "visible" : ""} mb-16`}
+        >
+          <p className="font-mono text-slate-500 text-xs uppercase tracking-widest mb-6">
+            Work
+          </p>
+          <h2
+            className="font-display font-extrabold text-white leading-tight"
+            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
+          >
+            Where I&apos;ve worked.
+          </h2>
+        </div>
+
+        <div>
+          {EXPERIENCE.map((job, i) => (
+            <ExperienceRow key={i} job={job} idx={i} />
+          ))}
+          <div className="border-t border-slate-800" />
         </div>
       </div>
     </section>
