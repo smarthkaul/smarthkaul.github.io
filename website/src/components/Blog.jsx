@@ -18,14 +18,6 @@ const POSTS = [
       "TODO: Write a compelling excerpt here. The best excerpts hint at a surprising insight or a concrete takeaway.",
     slug: "#", // TODO: Link to the actual post
   },
-  {
-    title: "TODO: Your Third Blog Post Title",
-    date: "TODO: Month DD, YYYY",
-    tag: "TODO: Tag",
-    excerpt:
-      "TODO: Another excerpt. If you don't have blog posts yet, write about something you've recently learned or a problem you solved at work.",
-    slug: "#", // TODO: Link to the actual post
-  },
 ];
 
 const Blog = () => {

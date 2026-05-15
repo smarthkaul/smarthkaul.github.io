@@ -25,8 +25,8 @@ const EXPERIENCE = [
   },
   {
     company: "TekUncorked",
-    url: "#",
-    role: "Machine Learning Intern",
+    url: "https://www.tekuncorked.com/",
+    role: "Industrial Machine Learning Intern",
     period: "May 2022 – Aug 2022",
     bullets: [
       "Developed a supervised learning model using Python, TensorFlow, and Keras to analyze household appliance energy consumption, enhancing accuracy and reliability of energy disaggregation.",
