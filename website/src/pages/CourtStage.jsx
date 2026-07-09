@@ -114,7 +114,7 @@ const CourtStage = () => {
         <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 py-24">
           <Hub />
           <p className="font-mono text-cream/70 text-xs uppercase tracking-widest mb-8">
-            Serve to explore — pick a zone
+            Drag the ball back to aim — launch it into a zone
           </p>
           <div
             ref={frameRef}
