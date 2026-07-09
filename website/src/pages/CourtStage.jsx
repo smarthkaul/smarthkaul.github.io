@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { BOXES, resolveActiveSection } from "../data/sections";
@@ -24,6 +25,21 @@ const CourtStage = () => {
   const active = resolveActiveSection(location.pathname);
   const goTo = (id) => navigate(id ? `/${id}` : "/");
 
+  const liveRef = useRef(null);
+  useEffect(() => {
+    if (active && liveRef.current) {
+      liveRef.current.textContent = `${active.label} section`;
+    }
+    // Move focus to the section heading on section change.
+    if (active) {
+      const heading = document.querySelector("main [id] h2, main [id] h1");
+      if (heading) {
+        heading.setAttribute("tabindex", "-1");
+        heading.focus();
+      }
+    }
+  }, [active]);
+
   const ActiveSection = active ? SECTION_COMPONENTS[active.id] : null;
   // Transform-origin for the erupt: the active zone's centre, as % of the court.
   const origin = active
@@ -32,6 +48,7 @@ const CourtStage = () => {
 
   return (
     <div className="relative min-h-screen court-turf overflow-hidden">
+      <p ref={liveRef} className="sr-only" role="status" aria-live="polite" />
       {!active && (
         <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 py-24">
           <Hub />
