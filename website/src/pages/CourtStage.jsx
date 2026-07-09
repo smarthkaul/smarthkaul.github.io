@@ -6,8 +6,11 @@ import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import Hud from "../components/court/Hud";
 import Ball from "../components/court/Ball";
+import Player from "../components/court/Player";
 import ServeTutorial from "../components/court/ServeTutorial";
 import OutCall from "../components/court/OutCall";
+import crowdAwwUrl from "../assets/crowd-aww.mp3";
+import crowdCheerUrl from "../assets/crowd-cheer.mp3";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -47,6 +50,31 @@ const CourtStage = () => {
   const [outCall, setOutCall] = useState(false);
   const [tutorial, setTutorial] = useState(false);
   const frameRef = useRef(null);
+  const missAudioRef = useRef(null);
+
+  const playMiss = () => {
+    let a = missAudioRef.current;
+    if (!a) {
+      a = new Audio(crowdAwwUrl);
+      a.volume = 0.5;
+      missAudioRef.current = a;
+    }
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  };
+
+  const hitAudioRef = useRef(null);
+
+  const playHit = () => {
+    let a = hitAudioRef.current;
+    if (!a) {
+      a = new Audio(crowdCheerUrl);
+      a.volume = 0.5;
+      hitAudioRef.current = a;
+    }
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  };
 
   const toCourtCoords = (e) => {
     const rect = frameRef.current.getBoundingClientRect();
@@ -79,11 +107,14 @@ const CourtStage = () => {
     const result = classifyLanding(shot);
     setShot(null);
     if (result.type === "hit") {
+      playHit();
       navigate(`/${result.sectionId}`);
     } else if (result.type === "out") {
+      playMiss();
       setOutCall(true);
       setTimeout(() => setOutCall(false), 900);
     } else {
+      playMiss();
       setTutorial(true);
     }
   };
@@ -126,6 +157,7 @@ const CourtStage = () => {
             onPointerUp={onPointerUp}
           >
             <Court active={null} onNavigate={() => {}} fill disabled />
+            <Player aim={aim} shot={shot} />
             <Ball aim={aim} shot={shot} onLand={onLand} />
             <OutCall show={outCall} />
           </div>
