@@ -18,6 +18,21 @@ const SECTION_COMPONENTS = {
   contact: Contact,
 };
 
+// Ref callback that fires when the section overlay mounts. Under
+// AnimatePresence mode="wait" the new overlay mounts only AFTER the previous
+// one finishes exiting, so at this point the new heading is in the DOM. Moving
+// focus here (rather than in a useEffect keyed on the route) guarantees focus
+// lands on the incoming section, not the outgoing one. Module-level so its
+// identity is stable and it runs on mount/unmount only.
+const focusSectionHeading = (node) => {
+  if (!node) return;
+  const heading = node.querySelector("h2, h1");
+  if (heading) {
+    heading.setAttribute("tabindex", "-1");
+    heading.focus();
+  }
+};
+
 const CourtStage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,16 +42,10 @@ const CourtStage = () => {
 
   const liveRef = useRef(null);
   useEffect(() => {
+    // Announce the section (timing-independent — reads from data, not the DOM).
+    // Focus is handled by the overlay's ref callback, which mounts at the right time.
     if (active && liveRef.current) {
       liveRef.current.textContent = `${active.label} section`;
-    }
-    // Move focus to the section heading on section change.
-    if (active) {
-      const heading = document.querySelector("main [id] h2, main [id] h1");
-      if (heading) {
-        heading.setAttribute("tabindex", "-1");
-        heading.focus();
-      }
     }
   }, [active]);
 
@@ -63,6 +72,7 @@ const CourtStage = () => {
         {ActiveSection && (
           <motion.div
             key={active.id}
+            ref={focusSectionHeading}
             initial={reduced ? false : { opacity: 0, scale: 0.6 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
