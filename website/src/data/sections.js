@@ -51,3 +51,38 @@ export function bezierPoint(origin, control, target, t) {
     y: u * u * origin.y + 2 * u * t * control.y + t * t * target.y,
   };
 }
+
+// --- Aim & landing (Phase 2 rework) ---
+
+// Doubles boundary rectangle in court units (matches Court.jsx's SVG boundary).
+export const COURT_BOUNDS = { x: 20, y: 20, w: 320, h: 500 };
+
+// Landing point from a drag "pull" vector (pointer - origin). Mirrored like a
+// slingshot (pull down → launch up the court) and scaled by power, clamped so a
+// huge pull can't send the ball infinitely far.
+export function landingFromPull(origin, pull, opts = {}) {
+  const power = opts.power ?? 2.2;
+  const maxReach = opts.maxReach ?? 560;
+  let vx = -pull.x * power;
+  let vy = -pull.y * power;
+  const mag = Math.hypot(vx, vy);
+  if (mag > maxReach && mag > 0) {
+    vx = (vx / mag) * maxReach;
+    vy = (vy / mag) * maxReach;
+  }
+  return { x: origin.x + vx, y: origin.y + vy };
+}
+
+export function pointInRect(p, r) {
+  return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+}
+
+// Classify a landing point: a service box (navigate), in-bounds miss (OUT), or
+// off the court entirely (the serve-tutorial easter egg).
+export function classifyLanding(point) {
+  for (const s of SECTIONS) {
+    if (pointInRect(point, BOXES[s.box])) return { type: "hit", sectionId: s.id };
+  }
+  if (pointInRect(point, COURT_BOUNDS)) return { type: "out" };
+  return { type: "beyond" };
+}
