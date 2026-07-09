@@ -9,6 +9,7 @@ import Ball from "../components/court/Ball";
 import Player from "../components/court/Player";
 import ServeTutorial from "../components/court/ServeTutorial";
 import OutCall from "../components/court/OutCall";
+import crowdAwwUrl from "../assets/crowd-aww.mp3";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -48,6 +49,18 @@ const CourtStage = () => {
   const [outCall, setOutCall] = useState(false);
   const [tutorial, setTutorial] = useState(false);
   const frameRef = useRef(null);
+  const missAudioRef = useRef(null);
+
+  const playMiss = () => {
+    let a = missAudioRef.current;
+    if (!a) {
+      a = new Audio(crowdAwwUrl);
+      a.volume = 0.5;
+      missAudioRef.current = a;
+    }
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  };
 
   const toCourtCoords = (e) => {
     const rect = frameRef.current.getBoundingClientRect();
@@ -82,9 +95,11 @@ const CourtStage = () => {
     if (result.type === "hit") {
       navigate(`/${result.sectionId}`);
     } else if (result.type === "out") {
+      playMiss();
       setOutCall(true);
       setTimeout(() => setOutCall(false), 900);
     } else {
+      playMiss();
       setTutorial(true);
     }
   };
