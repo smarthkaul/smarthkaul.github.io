@@ -1,11 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { BOXES, resolveActiveSection } from "../data/sections";
+import { BOXES, COURT, SERVE_ORIGIN, resolveActiveSection, landingFromPull, classifyLanding } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import Hud from "../components/court/Hud";
-import Hub from "../components/court/Hub";
+import Ball from "../components/court/Ball";
+import ServeTutorial from "../components/court/ServeTutorial";
+import OutCall from "../components/court/OutCall";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -37,6 +39,55 @@ const CourtStage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const reduced = usePrefersReducedMotion();
+
+  const MAX_PULL = 250; // tune: pull distance (court units) for full power
+
+  const [aim, setAim] = useState(null);
+  const [shot, setShot] = useState(null);
+  const [outCall, setOutCall] = useState(false);
+  const [tutorial, setTutorial] = useState(false);
+  const frameRef = useRef(null);
+
+  const toCourtCoords = (e) => {
+    const rect = frameRef.current.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * COURT.width,
+      y: ((e.clientY - rect.top) / rect.height) * COURT.height,
+    };
+  };
+
+  const onPointerDown = (e) => {
+    if (shot) return; // ignore while a ball is in flight
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setAim({ pull: { x: 0, y: 0 }, power: 0 });
+  };
+  const onPointerMove = (e) => {
+    if (!aim) return;
+    const p = toCourtCoords(e);
+    const pull = { x: p.x - SERVE_ORIGIN.x, y: p.y - SERVE_ORIGIN.y };
+    setAim({ pull, power: Math.min(1, Math.hypot(pull.x, pull.y) / MAX_PULL) });
+  };
+  const onPointerUp = () => {
+    if (!aim) return;
+    const pull = aim.pull;
+    setAim(null);
+    if (Math.hypot(pull.x, pull.y) < 6) return; // a tap, not a drag — no launch
+    setShot(landingFromPull(SERVE_ORIGIN, pull, { power: 2.6, maxReach: 720 }));
+  };
+
+  const onLand = () => {
+    const result = classifyLanding(shot);
+    setShot(null);
+    if (result.type === "hit") {
+      navigate(`/${result.sectionId}`);
+    } else if (result.type === "out") {
+      setOutCall(true);
+      setTimeout(() => setOutCall(false), 900);
+    } else {
+      setTutorial(true);
+    }
+  };
+
   const active = resolveActiveSection(location.pathname);
   const goTo = (id) => navigate(id ? `/${id}` : "/");
 
@@ -49,22 +100,41 @@ const CourtStage = () => {
     }
   }, [active]);
 
+  // Reset scroll on every navigation so the section card always appears from the
+  // top, regardless of how far the previous view had been scrolled.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const ActiveSection = active ? SECTION_COMPONENTS[active.id] : null;
   // Transform-origin for the erupt: the active zone's centre, as % of the court.
   const origin = active
-    ? `${(BOXES[active.box].cx / 360) * 100}% ${(BOXES[active.box].cy / 540) * 100}%`
+    ? `${(BOXES[active.box].cx / COURT.width) * 100}% ${(BOXES[active.box].cy / COURT.height) * 100}%`
     : "50% 50%";
 
   return (
     <div className="relative min-h-screen court-turf overflow-hidden">
       <p ref={liveRef} className="sr-only" role="status" aria-live="polite" />
       {!active && (
-        <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 py-24">
-          <Hub />
-          <p className="font-mono text-cream/70 text-xs uppercase tracking-widest mb-8">
-            Serve to explore — pick a zone
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-8 pt-16">
+          <div
+            ref={frameRef}
+            className="relative w-full touch-none select-none cursor-grab active:cursor-grabbing"
+            style={{ maxWidth: 960, aspectRatio: `${COURT.width} / ${COURT.height}` }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+          >
+            <Court active={null} onNavigate={() => {}} fill disabled />
+            <Ball aim={aim} shot={shot} onLand={onLand} />
+            <OutCall show={outCall} />
+          </div>
+          <p className="mt-6 font-mono text-cream/50 text-[0.7rem] uppercase tracking-widest text-center">
+            Drag the ball back to aim — launch it into a zone
           </p>
-          <Court active={null} onNavigate={goTo} />
+          <p className="sr-only">
+            Drag the ball to aim and launch it into a zone, or use the menu to jump to a section.
+          </p>
         </div>
       )}
 
@@ -94,6 +164,7 @@ const CourtStage = () => {
       </AnimatePresence>
 
       {active && <Hud active={active} onNavigate={goTo} />}
+      <ServeTutorial open={tutorial} onClose={() => setTutorial(false)} />
     </div>
   );
 };
