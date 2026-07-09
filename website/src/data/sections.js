@@ -23,3 +23,31 @@ export function resolveActiveSection(pathname) {
   const id = (pathname || "").replace(/^\/+|\/+$/g, "");
   return SECTIONS.find((s) => s.id === id) ?? null;
 }
+
+// --- Serve trajectory (Phase 2) ---
+
+// Near-baseline centre — where the ball launches from (no player yet).
+export const SERVE_ORIGIN = { x: 180, y: 520 };
+
+// Control point for a lobbed quadratic arc: horizontally between the two
+// points, vertically above the higher of them (smaller y = higher on screen).
+export function serveControl(origin, target) {
+  return {
+    x: (origin.x + target.x) / 2,
+    y: Math.min(origin.y, target.y) - 150,
+  };
+}
+
+// SVG quadratic path string — used to draw the Hawk-Eye trail.
+export function servePathD(origin, control, target) {
+  return `M ${origin.x} ${origin.y} Q ${control.x} ${control.y} ${target.x} ${target.y}`;
+}
+
+// Point on the quadratic bézier at t in [0,1]. The ball follows this per frame.
+export function bezierPoint(origin, control, target, t) {
+  const u = 1 - t;
+  return {
+    x: u * u * origin.x + 2 * u * t * control.x + t * t * target.x,
+    y: u * u * origin.y + 2 * u * t * control.y + t * t * target.y,
+  };
+}

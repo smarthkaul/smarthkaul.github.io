@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { SECTIONS, COURT, BOXES, resolveActiveSection } from './sections'
+import {
+  SECTIONS, COURT, BOXES, resolveActiveSection,
+  SERVE_ORIGIN, serveControl, servePathD, bezierPoint,
+} from './sections'
 
 describe('SECTIONS', () => {
   it('has the four sections in nav order with required fields', () => {
@@ -48,5 +51,42 @@ describe('resolveActiveSection', () => {
   })
   it('tolerates trailing slashes', () => {
     expect(resolveActiveSection('/about/')).toBe(SECTIONS[0])
+  })
+})
+
+describe('serve trajectory', () => {
+  const O = SERVE_ORIGIN
+  const T = { x: 120, y: 202.5 } // far-left box centre
+
+  it('SERVE_ORIGIN is the near-baseline centre within the court', () => {
+    expect(SERVE_ORIGIN).toEqual({ x: 180, y: 520 })
+    expect(SERVE_ORIGIN.x).toBeLessThanOrEqual(COURT.width)
+    expect(SERVE_ORIGIN.y).toBeLessThanOrEqual(COURT.height)
+  })
+
+  it('serveControl apex sits above the higher of origin/target', () => {
+    const c = serveControl(O, T)
+    expect(c.x).toBeCloseTo((O.x + T.x) / 2)
+    expect(c.y).toBeLessThan(Math.min(O.y, T.y)) // smaller y = higher on screen
+  })
+
+  it('bezierPoint returns the endpoints at t=0 and t=1', () => {
+    const c = serveControl(O, T)
+    expect(bezierPoint(O, c, T, 0)).toEqual(O)
+    const end = bezierPoint(O, c, T, 1)
+    expect(end.x).toBeCloseTo(T.x)
+    expect(end.y).toBeCloseTo(T.y)
+  })
+
+  it('bezierPoint midpoint is pulled toward the control point (arcs upward)', () => {
+    const c = serveControl(O, T)
+    const mid = bezierPoint(O, c, T, 0.5)
+    const straightMidY = (O.y + T.y) / 2
+    expect(mid.y).toBeLessThan(straightMidY) // the arc rises above the straight line
+  })
+
+  it('servePathD emits a quadratic path string through the control point', () => {
+    const c = serveControl(O, T)
+    expect(servePathD(O, c, T)).toBe(`M ${O.x} ${O.y} Q ${c.x} ${c.y} ${T.x} ${T.y}`)
   })
 })
