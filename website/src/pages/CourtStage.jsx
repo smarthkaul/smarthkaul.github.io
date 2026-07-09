@@ -1,5 +1,7 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { resolveActiveSection } from "../data/sections";
+import { AnimatePresence, motion } from "framer-motion";
+import { BOXES, resolveActiveSection } from "../data/sections";
+import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import About from "../components/About";
 import Experience from "../components/Experience";
@@ -16,10 +18,15 @@ const SECTION_COMPONENTS = {
 const CourtStage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const reduced = usePrefersReducedMotion();
   const active = resolveActiveSection(location.pathname);
   const goTo = (id) => navigate(id ? `/${id}` : "/");
 
   const ActiveSection = active ? SECTION_COMPONENTS[active.id] : null;
+  // Transform-origin for the erupt: the active zone's centre, as % of the court.
+  const origin = active
+    ? `${(BOXES[active.box].cx / 360) * 100}% ${(BOXES[active.box].cy / 540) * 100}%`
+    : "50% 50%";
 
   return (
     <div className="relative min-h-screen court-turf overflow-hidden">
@@ -38,19 +45,29 @@ const CourtStage = () => {
         </div>
       )}
 
-      {ActiveSection && (
-        <div className="py-24">
-          <ActiveSection />
-          <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 mt-6">
-            <Link
-              to="/"
-              className="font-mono text-xs uppercase tracking-widest text-cream hover:text-ball transition-colors"
-            >
-              &larr; Back to court
-            </Link>
-          </div>
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {ActiveSection && (
+          <motion.div
+            key={active.id}
+            initial={reduced ? false : { opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{ transformOrigin: origin }}
+            className="py-24"
+          >
+            <ActiveSection />
+            <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 mt-6">
+              <Link
+                to="/"
+                className="font-mono text-xs uppercase tracking-widest text-cream hover:text-ball transition-colors"
+              >
+                &larr; Back to court
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
