@@ -53,7 +53,7 @@ const Player = ({ aim, shot }) => {
     }
 
     if (aim) {
-      gsap.set(el, { rotation: REST - aim.power * 55, svgOrigin: ORIGIN });
+      gsap.set(el, { rotation: REST - aim.power * -55, svgOrigin: ORIGIN });
       return;
     }
 
@@ -74,7 +74,13 @@ const Player = ({ aim, shot }) => {
       gsap.set(el, { y: 0 });
       return;
     }
-    const t = gsap.to(el, { y: -6, duration: 0.55, ease: "sine.inOut", yoyo: true, repeat: -1 });
+    const t = gsap.to(el, {
+      y: -6,
+      duration: 0.55,
+      ease: "sine.inOut",
+      yoyo: true,
+      repeat: -1,
+    });
     return () => t.kill();
   }, [aim, shot, reduced]);
 
@@ -87,61 +93,61 @@ const Player = ({ aim, shot }) => {
       aria-hidden="true"
     >
       <g ref={figureRef}>
-      <image
-        href={rightArmUrl}
-        x={PARTS.leftArm.x}
-        y={PARTS.leftArm.y}
-        width={PARTS.leftArm.w}
-        height={PARTS.leftArm.h}
-      />
-      <image
-        href={bodyUrl}
-        x={PARTS.body.x}
-        y={PARTS.body.y}
-        width={PARTS.body.w}
-        height={PARTS.body.h}
-      />
-      <image
-        href={headUrl}
-        x={PARTS.head.x}
-        y={PARTS.head.y}
-        width={PARTS.head.w}
-        height={PARTS.head.h}
-      />
+        <image
+          href={rightArmUrl}
+          x={PARTS.leftArm.x}
+          y={PARTS.leftArm.y}
+          width={PARTS.leftArm.w}
+          height={PARTS.leftArm.h}
+        />
+        <image
+          href={bodyUrl}
+          x={PARTS.body.x}
+          y={PARTS.body.y}
+          width={PARTS.body.w}
+          height={PARTS.body.h}
+        />
+        <image
+          href={headUrl}
+          x={PARTS.head.x}
+          y={PARTS.head.y}
+          width={PARTS.head.w}
+          height={PARTS.head.h}
+        />
 
-      {/* right arm (swings) + a vector racket in the hand */}
-      <g ref={armRef}>
-        <image href={leftArmUrl} x={r.x} y={r.y} width={r.w} height={r.h} />
-        {/* handle */}
-        <line
-          x1={r.x + r.w / 2}
-          y1={r.y + r.h - 6}
-          x2={rk.cx - 4}
-          y2={rk.cy + 7}
-          stroke="#d6f84c"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        {/* racket frame */}
-        <ellipse
-          cx={rk.cx}
-          cy={rk.cy}
-          rx={rk.rx}
-          ry={rk.ry}
-          fill="none"
-          stroke="#d6f84c"
-          strokeWidth="2.5"
-        />
-        {/* strings */}
-        <g stroke="#d6f84c" strokeWidth="0.7" opacity="0.65">
-          <line x1={rk.cx - 4} y1={rk.cy - 9} x2={rk.cx - 4} y2={rk.cy + 9} />
-          <line x1={rk.cx} y1={rk.cy - 10} x2={rk.cx} y2={rk.cy + 10} />
-          <line x1={rk.cx + 4} y1={rk.cy - 9} x2={rk.cx + 4} y2={rk.cy + 9} />
-          <line x1={rk.cx - 6} y1={rk.cy - 5} x2={rk.cx + 6} y2={rk.cy - 5} />
-          <line x1={rk.cx - 7} y1={rk.cy} x2={rk.cx + 7} y2={rk.cy} />
-          <line x1={rk.cx - 6} y1={rk.cy + 5} x2={rk.cx + 6} y2={rk.cy + 5} />
+        {/* right arm (swings) + a vector racket in the hand */}
+        <g ref={armRef}>
+          <image href={leftArmUrl} x={r.x} y={r.y} width={r.w} height={r.h} />
+          {/* handle */}
+          <line
+            x1={r.x + r.w / 2}
+            y1={r.y + r.h - 6}
+            x2={rk.cx - 4}
+            y2={rk.cy + 7}
+            stroke="#d6f84c"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          {/* racket frame */}
+          <ellipse
+            cx={rk.cx}
+            cy={rk.cy}
+            rx={rk.rx}
+            ry={rk.ry}
+            fill="none"
+            stroke="#d6f84c"
+            strokeWidth="2.5"
+          />
+          {/* strings */}
+          <g stroke="#d6f84c" strokeWidth="0.7" opacity="0.65">
+            <line x1={rk.cx - 4} y1={rk.cy - 9} x2={rk.cx - 4} y2={rk.cy + 9} />
+            <line x1={rk.cx} y1={rk.cy - 10} x2={rk.cx} y2={rk.cy + 10} />
+            <line x1={rk.cx + 4} y1={rk.cy - 9} x2={rk.cx + 4} y2={rk.cy + 9} />
+            <line x1={rk.cx - 6} y1={rk.cy - 5} x2={rk.cx + 6} y2={rk.cy - 5} />
+            <line x1={rk.cx - 7} y1={rk.cy} x2={rk.cx + 7} y2={rk.cy} />
+            <line x1={rk.cx - 6} y1={rk.cy + 5} x2={rk.cx + 6} y2={rk.cy + 5} />
+          </g>
         </g>
-      </g>
       </g>
     </svg>
   );
