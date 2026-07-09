@@ -12,10 +12,10 @@ import rightArmUrl from "../../assets/player/right-arm.svg";
 // be tuned by eye. The right arm is the swinging piece — it pivots at the
 // shoulder for the wind-up (∝ pull) and the swing (on release).
 const PARTS = {
-  leftArm: { x: 72, y: 150, w: 17, h: 40 },
+  leftArm: { x: 73, y: 157, w: 17, h: 40 },
   body: { x: 85, y: 148, w: 30, h: 72 },
-  head: { x: 76, y: 102, w: 46, h: 56 },
-  rightArm: { x: 109, y: 150, w: 17, h: 42 },
+  head: { x: 76, y: 95, w: 46, h: 56 },
+  rightArm: { x: 109, y: 155, w: 17, h: 42 },
 };
 const SHOULDER = { x: 116, y: 154 }; // right-arm pivot
 const ORIGIN = `${SHOULDER.x} ${SHOULDER.y}`;
@@ -24,6 +24,7 @@ const REST = 0; // right-arm rotation at rest
 const Player = ({ aim, shot }) => {
   const reduced = usePrefersReducedMotion();
   const armRef = useRef(null);
+  const figureRef = useRef(null);
 
   useEffect(() => {
     const el = armRef.current;
@@ -36,8 +37,18 @@ const Player = ({ aim, shot }) => {
       }
       const tl = gsap
         .timeline()
-        .to(el, { rotation: REST + 60, svgOrigin: ORIGIN, duration: 0.14, ease: "power3.in" })
-        .to(el, { rotation: REST, svgOrigin: ORIGIN, duration: 0.4, ease: "power2.out" });
+        .to(el, {
+          rotation: REST + 60,
+          svgOrigin: ORIGIN,
+          duration: 0.14,
+          ease: "power3.in",
+        })
+        .to(el, {
+          rotation: REST,
+          svgOrigin: ORIGIN,
+          duration: 0.4,
+          ease: "power2.out",
+        });
       return () => tl.kill();
     }
 
@@ -46,7 +57,24 @@ const Player = ({ aim, shot }) => {
       return;
     }
 
-    const t = gsap.to(el, { rotation: REST, svgOrigin: ORIGIN, duration: reduced ? 0 : 0.3, ease: "power2.out" });
+    const t = gsap.to(el, {
+      rotation: REST,
+      svgOrigin: ORIGIN,
+      duration: reduced ? 0 : 0.3,
+      ease: "power2.out",
+    });
+    return () => t.kill();
+  }, [aim, shot, reduced]);
+
+  // Idle bounce: gently bob the whole figure when not aiming or swinging.
+  useEffect(() => {
+    const el = figureRef.current;
+    if (!el) return;
+    if (aim || shot || reduced) {
+      gsap.set(el, { y: 0 });
+      return;
+    }
+    const t = gsap.to(el, { y: -6, duration: 0.55, ease: "sine.inOut", yoyo: true, repeat: -1 });
     return () => t.kill();
   }, [aim, shot, reduced]);
 
@@ -58,17 +86,52 @@ const Player = ({ aim, shot }) => {
       className="absolute inset-0 w-full h-full pointer-events-none"
       aria-hidden="true"
     >
-      <image href={rightArmUrl} x={PARTS.leftArm.x} y={PARTS.leftArm.y} width={PARTS.leftArm.w} height={PARTS.leftArm.h} />
-      <image href={bodyUrl} x={PARTS.body.x} y={PARTS.body.y} width={PARTS.body.w} height={PARTS.body.h} />
-      <image href={headUrl} x={PARTS.head.x} y={PARTS.head.y} width={PARTS.head.w} height={PARTS.head.h} />
+      <g ref={figureRef}>
+      <image
+        href={rightArmUrl}
+        x={PARTS.leftArm.x}
+        y={PARTS.leftArm.y}
+        width={PARTS.leftArm.w}
+        height={PARTS.leftArm.h}
+      />
+      <image
+        href={bodyUrl}
+        x={PARTS.body.x}
+        y={PARTS.body.y}
+        width={PARTS.body.w}
+        height={PARTS.body.h}
+      />
+      <image
+        href={headUrl}
+        x={PARTS.head.x}
+        y={PARTS.head.y}
+        width={PARTS.head.w}
+        height={PARTS.head.h}
+      />
 
       {/* right arm (swings) + a vector racket in the hand */}
       <g ref={armRef}>
         <image href={leftArmUrl} x={r.x} y={r.y} width={r.w} height={r.h} />
         {/* handle */}
-        <line x1={r.x + r.w / 2} y1={r.y + r.h - 6} x2={rk.cx - 4} y2={rk.cy + 7} stroke="#d6f84c" strokeWidth="3" strokeLinecap="round" />
+        <line
+          x1={r.x + r.w / 2}
+          y1={r.y + r.h - 6}
+          x2={rk.cx - 4}
+          y2={rk.cy + 7}
+          stroke="#d6f84c"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
         {/* racket frame */}
-        <ellipse cx={rk.cx} cy={rk.cy} rx={rk.rx} ry={rk.ry} fill="none" stroke="#d6f84c" strokeWidth="2.5" />
+        <ellipse
+          cx={rk.cx}
+          cy={rk.cy}
+          rx={rk.rx}
+          ry={rk.ry}
+          fill="none"
+          stroke="#d6f84c"
+          strokeWidth="2.5"
+        />
         {/* strings */}
         <g stroke="#d6f84c" strokeWidth="0.7" opacity="0.65">
           <line x1={rk.cx - 4} y1={rk.cy - 9} x2={rk.cx - 4} y2={rk.cy + 9} />
@@ -78,6 +141,7 @@ const Player = ({ aim, shot }) => {
           <line x1={rk.cx - 7} y1={rk.cy} x2={rk.cx + 7} y2={rk.cy} />
           <line x1={rk.cx - 6} y1={rk.cy + 5} x2={rk.cx + 6} y2={rk.cy + 5} />
         </g>
+      </g>
       </g>
     </svg>
   );
