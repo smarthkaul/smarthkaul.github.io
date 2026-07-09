@@ -32,15 +32,18 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col justify-center bg-slate-950 px-6 sm:px-12 lg:px-24"
+      className="relative min-h-screen flex flex-col justify-center px-6 sm:px-12 lg:px-24"
     >
       <div className="max-w-5xl">
-        <p className="font-mono text-slate-500 text-xs uppercase tracking-widest mb-8">
-          Toronto, ON
-        </p>
+        <div className="inline-flex items-center gap-2 mb-8">
+          <span className="w-2 h-2 rounded-full bg-ball animate-pulse" />
+          <span className="font-mono text-cream text-xs uppercase tracking-widest">
+            Live &middot; Toronto, ON
+          </span>
+        </div>
 
         <h1
-          className="font-display font-extrabold text-white leading-none tracking-tight mb-8"
+          className="font-display font-extrabold text-cream leading-none tracking-tight mb-8"
           style={{ fontSize: "clamp(3.5rem, 10vw, 7rem)" }}
         >
           Smarth
@@ -49,19 +52,15 @@ const Hero = () => {
         </h1>
 
         <div className="flex items-center gap-1 mb-14" style={{ minHeight: "2.5rem" }}>
-          <span className="text-slate-300 text-xl sm:text-2xl font-light">
-            {display}
-          </span>
-          <span className="cursor-blink text-violet-400 text-2xl font-light select-none">
-            |
-          </span>
+          <span className="text-cream/90 text-xl sm:text-2xl font-light">{display}</span>
+          <span className="cursor-blink text-ball text-2xl font-light select-none">|</span>
         </div>
 
         <div className="flex items-center gap-6">
           <a
             href="https://github.com/smarthkaul"
             aria-label="GitHub"
-            className="text-slate-500 hover:text-white transition-colors duration-200"
+            className="text-cream/60 hover:text-cream transition-colors duration-200"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -72,7 +71,7 @@ const Hero = () => {
           <a
             href="https://linkedin.com/in/smarth-kaul"
             aria-label="LinkedIn"
-            className="text-slate-500 hover:text-white transition-colors duration-200"
+            className="text-cream/60 hover:text-cream transition-colors duration-200"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -83,7 +82,7 @@ const Hero = () => {
           <a
             href="mailto:smarth.kaul@mail.utoronto.ca"
             aria-label="Email"
-            className="text-slate-500 hover:text-white transition-colors duration-200"
+            className="text-cream/60 hover:text-cream transition-colors duration-200"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -92,7 +91,7 @@ const Hero = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-6 sm:left-12 lg:left-24 flex flex-col items-start gap-1 text-slate-700">
+      <div className="absolute bottom-8 left-6 sm:left-12 lg:left-24 flex flex-col items-start gap-1 text-cream/50">
         <span className="text-xs tracking-widest uppercase font-mono">Scroll</span>
         <svg className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

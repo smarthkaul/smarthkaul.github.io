@@ -10,11 +10,33 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  background-color: #276e3c;
 }
 
 ::selection {
-  background-color: #818cf8;
-  color: #fff;
+  background-color: #d6f84c;
+  color: #181b18;
+}
+
+/* Grass court background with mow-stripes */
+.court-turf {
+  background-color: #2f8f4e;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 60px,
+    rgba(0, 0, 0, 0.06) 60px,
+    rgba(0, 0, 0, 0.06) 120px
+  );
+}
+
+/* Broadcast ticker */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker 30s linear infinite;
 }
 
 /* Scroll reveal */
@@ -41,12 +63,25 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: #3a2151;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #4c2c69;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #818cf8;
+  background: #d6f84c;
+}
+
+/* Reduced motion: neutralize all decorative animation */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-ticker { animation: none; }
+  .cursor-blink { animation: none; }
+  .reveal { opacity: 1; transform: none; }
+  .reveal.visible { transition: none; }
+  .animate-pulse,
+  .animate-bounce {
+    animation: none;
+  }
 }
