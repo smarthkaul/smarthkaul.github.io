@@ -731,7 +731,7 @@ Replace `website/src/pages/CourtStage.jsx` entirely with:
 ```jsx
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { SECTIONS, BOXES, resolveActiveSection } from "../data/sections";
+import { BOXES, resolveActiveSection } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import About from "../components/About";
