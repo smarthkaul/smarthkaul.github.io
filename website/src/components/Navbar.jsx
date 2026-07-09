@@ -5,7 +5,7 @@ const iconClass = "text-cream/60 hover:text-ball transition-colors duration-200"
 
 const Navbar = () => (
   <header className="fixed top-0 left-0 right-0 z-50 bg-wimbledon/80 backdrop-blur-md border-b border-wimbledon-dark">
-    <nav className="flex items-center justify-between h-16 max-w-5xl mx-auto px-6 sm:px-8">
+    <nav className="flex items-center justify-between h-12 px-6 sm:px-10">
       <Link
         to="/"
         className="font-display font-bold text-cream text-lg tracking-tight hover:text-ball transition-colors"
