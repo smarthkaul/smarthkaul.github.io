@@ -80,4 +80,8 @@ body {
   .cursor-blink { animation: none; }
   .reveal { opacity: 1; transform: none; }
   .reveal.visible { transition: none; }
+  .animate-pulse,
+  .animate-bounce {
+    animation: none;
+  }
 }

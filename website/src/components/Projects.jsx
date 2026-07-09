@@ -70,6 +70,7 @@ const Projects = () => {
   return (
     <section id="projects" className="px-6 sm:px-12 lg:px-24 py-16">
       <div ref={ref} className={`max-w-3xl mx-auto reveal ${visible ? "visible" : ""}`}>
+        <h2 className="sr-only">Projects</h2>
         <p className="font-mono text-cream text-xs uppercase tracking-widest mb-4">
           Highlight Reel
         </p>
