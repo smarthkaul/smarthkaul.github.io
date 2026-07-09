@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { BOXES, COURT, resolveActiveSection } from "../data/sections";
+import { BOXES, COURT, SERVE_ORIGIN, resolveActiveSection, landingFromPull, classifyLanding } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import Hud from "../components/court/Hud";
 import Hub from "../components/court/Hub";
 import Ball from "../components/court/Ball";
+import ServeTutorial from "../components/court/ServeTutorial";
+import OutCall from "../components/court/OutCall";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -39,23 +41,51 @@ const CourtStage = () => {
   const navigate = useNavigate();
   const reduced = usePrefersReducedMotion();
 
-  const [serveTarget, setServeTarget] = useState(null);
+  const MAX_PULL = 150; // tune: pull distance (court units) for full power
 
-  const startServe = (id) => {
-    const section = resolveActiveSection(`/${id}`);
-    if (!section) return;
-    if (reduced) {
-      navigate(`/${id}`);
-      return;
-    }
-    setServeTarget(section);
+  const [aim, setAim] = useState(null);
+  const [shot, setShot] = useState(null);
+  const [outCall, setOutCall] = useState(false);
+  const [tutorial, setTutorial] = useState(false);
+  const frameRef = useRef(null);
+
+  const toCourtCoords = (e) => {
+    const rect = frameRef.current.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * COURT.width,
+      y: ((e.clientY - rect.top) / rect.height) * COURT.height,
+    };
   };
 
-  const handleServeComplete = () => {
-    if (serveTarget) {
-      const id = serveTarget.id;
-      setServeTarget(null);
-      navigate(`/${id}`);
+  const onPointerDown = (e) => {
+    if (shot) return; // ignore while a ball is in flight
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setAim({ pull: { x: 0, y: 0 }, power: 0 });
+  };
+  const onPointerMove = (e) => {
+    if (!aim) return;
+    const p = toCourtCoords(e);
+    const pull = { x: p.x - SERVE_ORIGIN.x, y: p.y - SERVE_ORIGIN.y };
+    setAim({ pull, power: Math.min(1, Math.hypot(pull.x, pull.y) / MAX_PULL) });
+  };
+  const onPointerUp = () => {
+    if (!aim) return;
+    const pull = aim.pull;
+    setAim(null);
+    if (Math.hypot(pull.x, pull.y) < 6) return; // a tap, not a drag — no launch
+    setShot(landingFromPull(SERVE_ORIGIN, pull, { power: 2.2, maxReach: MAX_PULL * 3.6 }));
+  };
+
+  const onLand = () => {
+    const result = classifyLanding(shot);
+    setShot(null);
+    if (result.type === "hit") {
+      navigate(`/${result.sectionId}`);
+    } else if (result.type === "out") {
+      setOutCall(true);
+      setTimeout(() => setOutCall(false), 900);
+    } else {
+      setTutorial(true);
     }
   };
 
@@ -87,11 +117,16 @@ const CourtStage = () => {
             Serve to explore — pick a zone
           </p>
           <div
-            className="relative mx-auto w-full"
+            ref={frameRef}
+            className="relative mx-auto w-full touch-none select-none cursor-grab active:cursor-grabbing"
             style={{ maxWidth: 520, aspectRatio: `${COURT.width} / ${COURT.height}` }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
           >
-            <Court active={null} onNavigate={startServe} fill disabled={!!serveTarget} />
-            <Ball target={serveTarget ? BOXES[serveTarget.box] : null} onComplete={handleServeComplete} />
+            <Court active={null} onNavigate={() => {}} fill disabled />
+            <Ball aim={aim} shot={shot} onLand={onLand} />
+            <OutCall show={outCall} />
           </div>
         </div>
       )}
@@ -122,6 +157,7 @@ const CourtStage = () => {
       </AnimatePresence>
 
       {active && <Hud active={active} onNavigate={goTo} />}
+      <ServeTutorial open={tutorial} onClose={() => setTutorial(false)} />
     </div>
   );
 };
