@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BOXES, resolveActiveSection } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
+import Hud from "../components/court/Hud";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -68,6 +69,8 @@ const CourtStage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {active && <Hud active={active} onNavigate={goTo} />}
     </div>
   );
 };
