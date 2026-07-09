@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { BOXES, resolveActiveSection } from "../data/sections";
+import { BOXES, COURT, resolveActiveSection } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import Hud from "../components/court/Hud";
 import Hub from "../components/court/Hub";
+import Ball from "../components/court/Ball";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -37,6 +38,27 @@ const CourtStage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const reduced = usePrefersReducedMotion();
+
+  const [serveTarget, setServeTarget] = useState(null);
+
+  const startServe = (id) => {
+    const section = resolveActiveSection(`/${id}`);
+    if (!section) return;
+    if (reduced) {
+      navigate(`/${id}`);
+      return;
+    }
+    setServeTarget(section);
+  };
+
+  const handleServeComplete = () => {
+    if (serveTarget) {
+      const id = serveTarget.id;
+      setServeTarget(null);
+      navigate(`/${id}`);
+    }
+  };
+
   const active = resolveActiveSection(location.pathname);
   const goTo = (id) => navigate(id ? `/${id}` : "/");
 
@@ -64,7 +86,13 @@ const CourtStage = () => {
           <p className="font-mono text-cream/70 text-xs uppercase tracking-widest mb-8">
             Serve to explore — pick a zone
           </p>
-          <Court active={null} onNavigate={goTo} />
+          <div
+            className="relative mx-auto w-full"
+            style={{ maxWidth: 520, aspectRatio: `${COURT.width} / ${COURT.height}` }}
+          >
+            <Court active={null} onNavigate={startServe} fill disabled={!!serveTarget} />
+            <Ball target={serveTarget ? BOXES[serveTarget.box] : null} onComplete={handleServeComplete} />
+          </div>
         </div>
       )}
 
