@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { SECTIONS, resolveActiveSection } from "../data/sections";
+import { resolveActiveSection } from "../data/sections";
+import Court from "../components/court/Court";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -31,21 +32,9 @@ const CourtStage = () => {
             Smarth Kaul
           </h1>
           <p className="font-mono text-cream/70 text-xs uppercase tracking-widest mb-8">
-            Pick a section
+            Serve to explore — pick a zone
           </p>
-          <ul className="flex flex-wrap gap-3 list-none p-0 m-0">
-            {SECTIONS.map((s) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => goTo(s.id)}
-                  className="font-mono text-xs uppercase tracking-widest bg-cream text-charcoal px-4 py-2 rounded-full hover:bg-ball transition-colors"
-                >
-                  {s.label}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <Court active={null} onNavigate={goTo} />
         </div>
       )}
 

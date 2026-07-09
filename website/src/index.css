@@ -39,6 +39,15 @@ body {
   animation: ticker 30s linear infinite;
 }
 
+/* Court zone breathing pulse */
+@keyframes zonePulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; box-shadow: 0 0 0 4px rgba(214, 248, 76, 0.25); }
+}
+.zone-pulse {
+  animation: zonePulse 2.4s ease-in-out infinite;
+}
+
 /* Scroll reveal */
 .reveal {
   opacity: 0;
@@ -77,6 +86,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .animate-ticker { animation: none; }
+  .zone-pulse { animation: none; }
   .cursor-blink { animation: none; }
   .reveal { opacity: 1; transform: none; }
   .reveal.visible { transition: none; }
