@@ -128,6 +128,9 @@ const CourtStage = () => {
             <Ball aim={aim} shot={shot} onLand={onLand} />
             <OutCall show={outCall} />
           </div>
+          <p className="sr-only">
+            Drag the ball to aim and launch it into a zone, or use the menu to jump to a section.
+          </p>
         </div>
       )}
 
