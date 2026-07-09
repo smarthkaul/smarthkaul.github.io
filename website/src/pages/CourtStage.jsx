@@ -6,6 +6,7 @@ import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import Hud from "../components/court/Hud";
 import Ball from "../components/court/Ball";
+import Player from "../components/court/Player";
 import ServeTutorial from "../components/court/ServeTutorial";
 import OutCall from "../components/court/OutCall";
 import About from "../components/About";
@@ -126,6 +127,7 @@ const CourtStage = () => {
             onPointerUp={onPointerUp}
           >
             <Court active={null} onNavigate={() => {}} fill disabled />
+            <Player aim={aim} shot={shot} />
             <Ball aim={aim} shot={shot} onLand={onLand} />
             <OutCall show={outCall} />
           </div>
