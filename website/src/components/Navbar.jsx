@@ -20,14 +20,14 @@ const Navbar = () => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-slate-950/90 backdrop-blur-md border-b border-slate-800/50"
+          ? "bg-wimbledon/90 backdrop-blur-md border-b border-wimbledon-dark"
           : "bg-transparent"
       }`}
     >
       <nav className="flex items-center justify-between h-16 px-6 sm:px-12 lg:px-24">
         <a
           href="#hero"
-          className="font-display font-bold text-white text-lg tracking-tight hover:text-violet-400 transition-colors"
+          className="font-display font-bold text-cream text-lg tracking-tight hover:text-ball transition-colors"
         >
           SK
         </a>
@@ -37,7 +37,7 @@ const Navbar = () => {
             <li key={label}>
               <a
                 href={href}
-                className="text-slate-400 hover:text-white transition-colors text-sm font-medium"
+                className="text-cream/70 hover:text-ball transition-colors text-sm font-medium"
               >
                 {label}
               </a>
@@ -46,7 +46,7 @@ const Navbar = () => {
         </ul>
 
         <button
-          className="md:hidden text-slate-400 hover:text-white transition-colors"
+          className="md:hidden text-cream/70 hover:text-ball transition-colors"
           onClick={() => setMenuOpen((p) => !p)}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
@@ -62,13 +62,13 @@ const Navbar = () => {
       </nav>
 
       {menuOpen && (
-        <div className="md:hidden bg-slate-950/95 backdrop-blur-md border-b border-slate-800 px-6 py-4">
+        <div className="md:hidden bg-wimbledon/95 backdrop-blur-md border-b border-wimbledon-dark px-6 py-4">
           <ul className="flex flex-col gap-4 list-none m-0 p-0">
             {NAV_LINKS.map(({ label, href }) => (
               <li key={label}>
                 <a
                   href={href}
-                  className="text-slate-300 hover:text-white text-sm font-medium transition-colors"
+                  className="text-cream hover:text-ball text-sm font-medium transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
                   {label}
