@@ -9,7 +9,7 @@ const Hud = ({ active, onNavigate }) => {
       initial={reduced ? false : { opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={reduced ? { duration: 0 } : { duration: 0.35, ease: "easeOut" }}
-      className="fixed top-20 right-4 z-40 w-44 sm:w-52 bg-wimbledon/90 backdrop-blur-md rounded-xl border border-wimbledon-dark p-3 shadow-xl"
+      className="hidden sm:block fixed top-20 right-4 z-40 w-44 sm:w-52 bg-wimbledon/90 backdrop-blur-md rounded-xl border border-wimbledon-dark p-3 shadow-xl"
       aria-label="Court navigation"
     >
       <div className="flex items-center justify-between mb-2">
