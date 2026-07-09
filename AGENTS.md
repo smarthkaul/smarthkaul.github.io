@@ -2,6 +2,10 @@
 
 Guidance for AI agents (and humans) working in this repository. Read this before making changes.
 
+> **⚠️ Redesign in progress — tennis broadcast theme.** A full redesign is planned and approved: see [`plan/2026-07-08-tennis-court-redesign-design.md`](plan/2026-07-08-tennis-court-redesign-design.md). It replaces the current dark/`slate-950`/`violet` identity with a daytime tennis-broadcast look (grass/Wimbledon green + purple + cream + neon-ball yellow) and ball-driven navigation.
+>
+> The **Design consistency** and palette guidance below describes the **currently shipped site** — it is accurate for the code as it stands today, but is being replaced. If you are implementing the redesign, follow the spec, not the old palette rules, and **do not "correct" new broadcast-themed work back to the old violet system.** This file's design sections will be rewritten to the new system as Phase 0 (the reskin) lands.
+
 ## What this is
 
 A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.github.io`. It's a React SPA built with Vite and styled with Tailwind CSS. There is no backend, database, or CMS — all content is hard-coded in the components as JavaScript data arrays.
