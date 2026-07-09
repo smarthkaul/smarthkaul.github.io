@@ -2,11 +2,11 @@ import { SECTIONS, COURT, BOXES } from "../../data/sections";
 
 const pct = (value, total) => `${(value / total) * 100}%`;
 
-const Court = ({ active, onNavigate, docked = false }) => {
+const Court = ({ active, onNavigate, docked = false, fill = false, disabled = false }) => {
   return (
     <div
-      className="relative mx-auto w-full"
-      style={{ maxWidth: docked ? 220 : 520, aspectRatio: `${COURT.width} / ${COURT.height}` }}
+      className={fill ? "absolute inset-0 w-full h-full" : "relative mx-auto w-full"}
+      style={fill ? undefined : { maxWidth: docked ? 220 : 520, aspectRatio: `${COURT.width} / ${COURT.height}` }}
     >
       {/* Court lines (decorative) */}
       <svg
@@ -38,6 +38,7 @@ const Court = ({ active, onNavigate, docked = false }) => {
             key={s.id}
             type="button"
             onClick={() => onNavigate(s.id)}
+            disabled={disabled}
             aria-label={`Go to ${s.label}`}
             aria-current={isActive ? "page" : undefined}
             className={`absolute flex flex-col items-center justify-center rounded-md border-2 transition-colors
@@ -45,6 +46,7 @@ const Court = ({ active, onNavigate, docked = false }) => {
                 ? "border-ball bg-ball/20 text-cream"
                 : "border-white/40 bg-white/5 text-cream/90 hover:bg-ball/15 hover:border-ball"}
               ${docked ? "" : "zone-pulse"}
+              ${disabled ? "pointer-events-none" : ""}
               focus:outline-none focus-visible:ring-2 focus-visible:ring-ball`}
             style={{
               left: pct(b.x, COURT.width),
