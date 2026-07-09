@@ -7,19 +7,20 @@ export const SECTIONS = [
   { id: "contact", label: "Contact", broadcast: "Match Point", box: "beyond-bottom" },
 ];
 
-// SVG viewBox for the top-down court (landscape). There is extra width to the
-// right of the far baseline (x>520) to hold the "beyond the baseline" targets.
-export const COURT = { width: 680, height: 360 };
+// SVG viewBox for the top-down court (landscape). The court itself is centred
+// (x 140..640); the left margin is the server's run-up, the right margin holds
+// the two circular "beyond the baseline" targets.
+export const COURT = { width: 780, height: 360 };
 
-// Navigation-target rectangles in court units. The net is vertical at x=270. The
-// two FAR service boxes (right of the net) plus two zones BEYOND the far baseline
-// (x>520, off the court) are the targets; the near service boxes are drawn on the
-// court but are not targets. cx/cy are box centres (the section "erupt" origin).
+// Navigation-target rectangles in court units. The net is vertical at x=390. The
+// two FAR service boxes (right of the net) are drawn as boxes; the two BEYOND
+// targets (x>640, off the court) render as circular archery targets. cx/cy are
+// box centres (the section "erupt" origin and the circle centre).
 export const BOXES = {
-  "far-top": { x: 270, y: 60, w: 135, h: 120, cx: 337.5, cy: 120 },
-  "far-bottom": { x: 270, y: 180, w: 135, h: 120, cx: 337.5, cy: 240 },
-  "beyond-top": { x: 555, y: 60, w: 110, h: 120, cx: 610, cy: 120 },
-  "beyond-bottom": { x: 555, y: 180, w: 110, h: 120, cx: 610, cy: 240 },
+  "far-top": { x: 390, y: 60, w: 125, h: 120, cx: 452.5, cy: 120 },
+  "far-bottom": { x: 390, y: 180, w: 125, h: 120, cx: 452.5, cy: 240 },
+  "beyond-top": { x: 658, y: 58, w: 104, h: 104, cx: 710, cy: 110 },
+  "beyond-bottom": { x: 658, y: 198, w: 104, h: 104, cx: 710, cy: 250 },
 };
 
 export function resolveActiveSection(pathname) {
@@ -30,7 +31,7 @@ export function resolveActiveSection(pathname) {
 // --- Serve trajectory (Phase 2) ---
 
 // Left-baseline centre — where the ball launches from (no player yet).
-export const SERVE_ORIGIN = { x: 35, y: 180 };
+export const SERVE_ORIGIN = { x: 155, y: 180 };
 
 // Control point for a lobbed quadratic arc: horizontally between the two
 // points, vertically above the higher of them (smaller y = higher on screen).
@@ -58,13 +59,13 @@ export function bezierPoint(origin, control, target, t) {
 // --- Aim & landing (Phase 2 rework) ---
 
 // Doubles boundary rectangle in court units (matches Court.jsx's SVG boundary).
-export const COURT_BOUNDS = { x: 20, y: 20, w: 500, h: 320 };
+export const COURT_BOUNDS = { x: 140, y: 20, w: 500, h: 320 };
 
 // Landing point from a drag "pull" vector (pointer - origin). Mirrored like a
 // slingshot (pull back → launch across the court) and scaled by power, clamped
 // so a huge pull can't send the ball infinitely far.
 export function landingFromPull(origin, pull, opts = {}) {
-  const power = opts.power ?? 2.2;
+  const power = opts.power ?? 2.6;
   const maxReach = opts.maxReach ?? 720;
   let vx = -pull.x * power;
   let vy = -pull.y * power;
@@ -80,8 +81,8 @@ export function pointInRect(p, r) {
   return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
 }
 
-// Classify a landing point: a service box (navigate), in-bounds miss (OUT), or
-// off the court entirely (the serve-tutorial easter egg).
+// Classify a landing point: a target (navigate), in-bounds miss (OUT), or off
+// the court entirely (the serve-tutorial easter egg).
 export function classifyLanding(point) {
   for (const s of SECTIONS) {
     if (pointInRect(point, BOXES[s.box])) return { type: "hit", sectionId: s.id };

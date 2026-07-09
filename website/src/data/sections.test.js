@@ -57,10 +57,10 @@ describe('resolveActiveSection', () => {
 
 describe('serve trajectory', () => {
   const O = SERVE_ORIGIN
-  const T = { x: 337.5, y: 120 } // far-top box centre
+  const T = { x: 452.5, y: 120 } // far-top box centre
 
   it('SERVE_ORIGIN is the left-baseline centre within the court', () => {
-    expect(SERVE_ORIGIN).toEqual({ x: 35, y: 180 })
+    expect(SERVE_ORIGIN).toEqual({ x: 155, y: 180 })
     expect(SERVE_ORIGIN.x).toBeLessThanOrEqual(COURT.width)
     expect(SERVE_ORIGIN.y).toBeLessThanOrEqual(COURT.height)
   })
@@ -106,7 +106,7 @@ describe('aim & landing', () => {
   })
 
   it('pointInRect is inclusive of edges', () => {
-    expect(pointInRect({ x: 270, y: 60 }, BOXES['far-top'])).toBe(true)
+    expect(pointInRect({ x: 390, y: 60 }, BOXES['far-top'])).toBe(true)
     expect(pointInRect({ x: 0, y: 0 }, BOXES['far-top'])).toBe(false)
   })
 
@@ -123,11 +123,11 @@ describe('aim & landing', () => {
 
   it('classifyLanding: out when in-bounds but not in a box', () => {
     // inside the court, left of the near service line (backcourt) — not in any box
-    expect(classifyLanding({ x: 70, y: 180 })).toEqual({ type: 'out' })
+    expect(classifyLanding({ x: 200, y: 180 })).toEqual({ type: 'out' })
   })
 
   it('classifyLanding: beyond when off the court and missing the targets', () => {
     expect(classifyLanding({ x: 180, y: -40 })).toEqual({ type: 'beyond' }) // above the court
-    expect(classifyLanding({ x: 600, y: 30 })).toEqual({ type: 'beyond' })  // past baseline, above the beyond target
+    expect(classifyLanding({ x: 730, y: 30 })).toEqual({ type: 'beyond' })  // past baseline, above the beyond target
   })
 })

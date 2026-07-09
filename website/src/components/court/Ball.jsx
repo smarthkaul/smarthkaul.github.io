@@ -11,16 +11,27 @@ const Ball = ({ aim, shot, onLand }) => {
   const trailRef = useRef(null);
   const rippleRef = useRef(null);
 
-  // Idle bob at the baseline when neither aiming nor mid-flight.
+  // Idle: glide the ball back to the baseline from wherever it is (e.g. after a
+  // miss that flew off-court), then bob gently. The glide makes the return
+  // robust regardless of where the flight left the ball.
   useGSAP(
     () => {
       if (aim || shot) return;
-      gsap.set(ballRef.current, { attr: { cx: SERVE_ORIGIN.x, cy: SERVE_ORIGIN.y } });
-      if (reduced) return;
-      gsap.to(ballRef.current, {
-        attr: { cy: SERVE_ORIGIN.y - 8 },
-        duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: -1,
+      const tl = gsap.timeline();
+      tl.to(ballRef.current, {
+        attr: { cx: SERVE_ORIGIN.x, cy: SERVE_ORIGIN.y },
+        duration: reduced ? 0 : 0.3,
+        ease: "power2.out",
       });
+      if (!reduced) {
+        tl.to(ballRef.current, {
+          attr: { cy: SERVE_ORIGIN.y - 8 },
+          duration: 1.1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+        });
+      }
     },
     { scope, dependencies: [aim, shot, reduced] }
   );
@@ -44,13 +55,19 @@ const Ball = ({ aim, shot, onLand }) => {
       const progress = { t: 0 };
       const tl = gsap.timeline({ onComplete: () => onLand?.() });
       tl.to(trailRef.current, { opacity: 0.7, duration: 0.12 }, 0);
-      tl.to(progress, {
-        t: 1, duration: 0.7, ease: "power1.in",
-        onUpdate: () => {
-          const p = bezierPoint(SERVE_ORIGIN, control, shot, progress.t);
-          gsap.set(ballRef.current, { attr: { cx: p.x, cy: p.y } });
+      tl.to(
+        progress,
+        {
+          t: 1,
+          duration: 0.7,
+          ease: "power1.in",
+          onUpdate: () => {
+            const p = bezierPoint(SERVE_ORIGIN, control, shot, progress.t);
+            gsap.set(ballRef.current, { attr: { cx: p.x, cy: p.y } });
+          },
         },
-      }, 0);
+        0
+      );
       tl.to(rippleRef.current, { attr: { r: 40 }, opacity: 0.6, duration: 0.05 }, ">-0.02");
       tl.to(rippleRef.current, { opacity: 0, duration: 0.35, ease: "power2.out" });
       tl.to(trailRef.current, { opacity: 0, duration: 0.35 }, "<");
@@ -73,13 +90,19 @@ const Ball = ({ aim, shot, onLand }) => {
       {aimLine && (
         <>
           <line
-            x1={SERVE_ORIGIN.x} y1={SERVE_ORIGIN.y}
-            x2={aimLine.x2} y2={aimLine.y2}
-            stroke="#d6f84c" strokeWidth="2" strokeDasharray="3 6" strokeLinecap="round" opacity="0.8"
+            x1={SERVE_ORIGIN.x}
+            y1={SERVE_ORIGIN.y}
+            x2={aimLine.x2}
+            y2={aimLine.y2}
+            stroke="#d6f84c"
+            strokeWidth="2"
+            strokeDasharray="3 6"
+            strokeLinecap="round"
+            opacity="0.8"
           />
           {/* Power gauge: a short bar near the baseline, fill ∝ power */}
-          <rect x={SERVE_ORIGIN.x - 40} y={SERVE_ORIGIN.y + 6} width="80" height="6" rx="3" fill="#276e3c" opacity="0.5" />
-          <rect x={SERVE_ORIGIN.x - 40} y={SERVE_ORIGIN.y + 6} width={80 * Math.min(1, aim.power)} height="6" rx="3" fill="#d6f84c" />
+          <rect x={SERVE_ORIGIN.x - 40} y={SERVE_ORIGIN.y + 10} width="80" height="6" rx="3" fill="#276e3c" opacity="0.5" />
+          <rect x={SERVE_ORIGIN.x - 40} y={SERVE_ORIGIN.y + 10} width={80 * Math.min(1, aim.power)} height="6" rx="3" fill="#d6f84c" />
         </>
       )}
       <path ref={trailRef} fill="none" stroke="#d6f84c" strokeWidth="3" strokeDasharray="2 9" strokeLinecap="round" opacity="0" />

@@ -100,6 +100,12 @@ const CourtStage = () => {
     }
   }, [active]);
 
+  // Reset scroll on every navigation so the section card always appears from the
+  // top, regardless of how far the previous view had been scrolled.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const ActiveSection = active ? SECTION_COMPONENTS[active.id] : null;
   // Transform-origin for the erupt: the active zone's centre, as % of the court.
   const origin = active
@@ -114,7 +120,7 @@ const CourtStage = () => {
           <div
             ref={frameRef}
             className="relative w-full touch-none select-none cursor-grab active:cursor-grabbing"
-            style={{ maxWidth: 860, aspectRatio: `${COURT.width} / ${COURT.height}` }}
+            style={{ maxWidth: 960, aspectRatio: `${COURT.width} / ${COURT.height}` }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
