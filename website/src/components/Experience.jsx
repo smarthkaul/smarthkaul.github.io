@@ -6,7 +6,6 @@ import Badge from "./broadcast/Badge";
 const EXPERIENCE = [
   {
     company: "Grant Thornton",
-    tournament: "Grant Thornton Open",
     url: "https://www.grantthornton.ca",
     role: "Business Consulting Intern",
     year: "2024",
@@ -17,7 +16,6 @@ const EXPERIENCE = [
   },
   {
     company: "IESO",
-    tournament: "IESO Championships",
     url: "https://www.ieso.ca",
     role: "Data Analyst Intern",
     year: "2023",
@@ -28,7 +26,6 @@ const EXPERIENCE = [
   },
   {
     company: "TekUncorked",
-    tournament: "TekUncorked Classic",
     url: "https://www.tekuncorked.com/",
     role: "Industrial ML Intern",
     year: "2022",
@@ -54,7 +51,7 @@ const MatchRow = ({ job }) => {
           <span className="font-mono text-charcoal/40 text-xs shrink-0">{job.year}</span>
           <span className="min-w-0">
             <span className="font-display font-bold text-charcoal block truncate">
-              {job.tournament}
+              {job.company}
             </span>
             <span className="font-mono text-[0.7rem] uppercase tracking-widest text-grass-dark">
               {job.result}
