@@ -57,10 +57,10 @@ describe('resolveActiveSection', () => {
 
 describe('serve trajectory', () => {
   const O = SERVE_ORIGIN
-  const T = { x: 120, y: 202.5 } // far-left box centre
+  const T = { x: 337.5, y: 120 } // far-top box centre
 
-  it('SERVE_ORIGIN is the near-baseline centre within the court', () => {
-    expect(SERVE_ORIGIN).toEqual({ x: 180, y: 520 })
+  it('SERVE_ORIGIN is the left-baseline centre within the court', () => {
+    expect(SERVE_ORIGIN).toEqual({ x: 35, y: 180 })
     expect(SERVE_ORIGIN.x).toBeLessThanOrEqual(COURT.width)
     expect(SERVE_ORIGIN.y).toBeLessThanOrEqual(COURT.height)
   })
@@ -106,22 +106,22 @@ describe('aim & landing', () => {
   })
 
   it('pointInRect is inclusive of edges', () => {
-    expect(pointInRect({ x: 60, y: 135 }, BOXES['far-left'])).toBe(true)
-    expect(pointInRect({ x: 0, y: 0 }, BOXES['far-left'])).toBe(false)
+    expect(pointInRect({ x: 270, y: 60 }, BOXES['far-top'])).toBe(true)
+    expect(pointInRect({ x: 0, y: 0 }, BOXES['far-top'])).toBe(false)
   })
 
   it('classifyLanding: hit when inside a service box', () => {
-    const far = BOXES['far-left']
+    const far = BOXES['far-top']
     expect(classifyLanding({ x: far.cx, y: far.cy })).toEqual({ type: 'hit', sectionId: 'projects' })
   })
 
   it('classifyLanding: out when in-bounds but not in a box', () => {
-    // near baseline, inside court, below all service boxes (y between 405 and 520)
-    expect(classifyLanding({ x: 180, y: 460 })).toEqual({ type: 'out' })
+    // inside the court, left of the near service line (backcourt) — not in any box
+    expect(classifyLanding({ x: 70, y: 180 })).toEqual({ type: 'out' })
   })
 
   it('classifyLanding: beyond when outside the court bounds', () => {
-    expect(classifyLanding({ x: 180, y: -40 })).toEqual({ type: 'beyond' })  // past far baseline
-    expect(classifyLanding({ x: 500, y: 200 })).toEqual({ type: 'beyond' })  // past sideline
+    expect(classifyLanding({ x: 180, y: -40 })).toEqual({ type: 'beyond' })  // past top sideline
+    expect(classifyLanding({ x: 560, y: 180 })).toEqual({ type: 'beyond' })  // past far baseline
   })
 })

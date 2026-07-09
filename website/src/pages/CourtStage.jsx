@@ -5,7 +5,6 @@ import { BOXES, COURT, SERVE_ORIGIN, resolveActiveSection, landingFromPull, clas
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import Court from "../components/court/Court";
 import Hud from "../components/court/Hud";
-import Hub from "../components/court/Hub";
 import Ball from "../components/court/Ball";
 import ServeTutorial from "../components/court/ServeTutorial";
 import OutCall from "../components/court/OutCall";
@@ -104,22 +103,18 @@ const CourtStage = () => {
   const ActiveSection = active ? SECTION_COMPONENTS[active.id] : null;
   // Transform-origin for the erupt: the active zone's centre, as % of the court.
   const origin = active
-    ? `${(BOXES[active.box].cx / 360) * 100}% ${(BOXES[active.box].cy / 540) * 100}%`
+    ? `${(BOXES[active.box].cx / COURT.width) * 100}% ${(BOXES[active.box].cy / COURT.height) * 100}%`
     : "50% 50%";
 
   return (
     <div className="relative min-h-screen court-turf overflow-hidden">
       <p ref={liveRef} className="sr-only" role="status" aria-live="polite" />
       {!active && (
-        <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 py-24">
-          <Hub />
-          <p className="font-mono text-cream/70 text-xs uppercase tracking-widest mb-8">
-            Drag the ball back to aim — launch it into a zone
-          </p>
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-8 pt-16">
           <div
             ref={frameRef}
-            className="relative mx-auto w-full touch-none select-none cursor-grab active:cursor-grabbing"
-            style={{ maxWidth: 520, aspectRatio: `${COURT.width} / ${COURT.height}` }}
+            className="relative w-full touch-none select-none cursor-grab active:cursor-grabbing"
+            style={{ maxWidth: 860, aspectRatio: `${COURT.width} / ${COURT.height}` }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -128,6 +123,9 @@ const CourtStage = () => {
             <Ball aim={aim} shot={shot} onLand={onLand} />
             <OutCall show={outCall} />
           </div>
+          <p className="mt-6 font-mono text-cream/50 text-[0.7rem] uppercase tracking-widest text-center">
+            Drag the ball back to aim — launch it into a zone
+          </p>
           <p className="sr-only">
             Drag the ball to aim and launch it into a zone, or use the menu to jump to a section.
           </p>

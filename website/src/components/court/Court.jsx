@@ -15,18 +15,18 @@ const Court = ({ active, onNavigate, docked = false, fill = false, disabled = fa
         aria-hidden="true"
       >
         {/* playing surface */}
-        <rect x="20" y="20" width="320" height="500" rx="6" fill="#276e3c" />
-        {/* boundary + singles lines + service boxes + net */}
+        <rect x="20" y="20" width="500" height="320" rx="6" fill="#276e3c" />
+        {/* boundary + singles sidelines + service lines */}
         <g fill="none" stroke="#ffffff" strokeWidth="3">
-          <rect x="20" y="20" width="320" height="500" />
-          <line x1="60" y1="20" x2="60" y2="520" />
-          <line x1="300" y1="20" x2="300" y2="520" />
-          <line x1="60" y1="135" x2="300" y2="135" />
-          <line x1="60" y1="405" x2="300" y2="405" />
-          <line x1="180" y1="135" x2="180" y2="405" />
+          <rect x="20" y="20" width="500" height="320" />
+          <line x1="20" y1="60" x2="520" y2="60" />
+          <line x1="20" y1="300" x2="520" y2="300" />
+          <line x1="135" y1="60" x2="135" y2="300" />
+          <line x1="405" y1="60" x2="405" y2="300" />
+          <line x1="135" y1="180" x2="405" y2="180" />
         </g>
-        {/* net */}
-        <line x1="20" y1="270" x2="340" y2="270" stroke="#f4f1e9" strokeWidth="4" strokeDasharray="4 4" />
+        {/* net (vertical, mid-court) */}
+        <line x1="270" y1="20" x2="270" y2="340" stroke="#f4f1e9" strokeWidth="4" strokeDasharray="4 4" />
       </svg>
 
       {/* Zone buttons */}

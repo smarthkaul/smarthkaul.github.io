@@ -1,22 +1,23 @@
 // Single source of truth for navigation, court zones, and routing.
 
 export const SECTIONS = [
-  { id: "about", label: "About", broadcast: "The Player", box: "near-left" },
-  { id: "experience", label: "Experience", broadcast: "Career Record", box: "near-right" },
-  { id: "projects", label: "Projects", broadcast: "Highlight Reel", box: "far-left" },
-  { id: "contact", label: "Contact", broadcast: "Match Point", box: "far-right" },
+  { id: "about", label: "About", broadcast: "The Player", box: "near-top" },
+  { id: "experience", label: "Experience", broadcast: "Career Record", box: "near-bottom" },
+  { id: "projects", label: "Projects", broadcast: "Highlight Reel", box: "far-top" },
+  { id: "contact", label: "Contact", broadcast: "Match Point", box: "far-bottom" },
 ];
 
-// SVG viewBox for the top-down court (portrait: a court is longer than wide).
-export const COURT = { width: 360, height: 540 };
+// SVG viewBox for the top-down court (landscape: a court is wider than it is tall).
+export const COURT = { width: 540, height: 360 };
 
-// Service-box rectangles in court units. Net is at y=270; near boxes below it,
-// far boxes above. cx/cy are the box centres (used as the section "erupt" origin).
+// Service-box rectangles in court units. The net is vertical at x=270; the near
+// boxes sit left of it (the server's side), the far boxes right of it. cx/cy are
+// the box centres (used as the section "erupt" origin).
 export const BOXES = {
-  "near-left": { x: 60, y: 270, w: 120, h: 135, cx: 120, cy: 337.5 },
-  "near-right": { x: 180, y: 270, w: 120, h: 135, cx: 240, cy: 337.5 },
-  "far-left": { x: 60, y: 135, w: 120, h: 135, cx: 120, cy: 202.5 },
-  "far-right": { x: 180, y: 135, w: 120, h: 135, cx: 240, cy: 202.5 },
+  "near-top": { x: 135, y: 60, w: 135, h: 120, cx: 202.5, cy: 120 },
+  "near-bottom": { x: 135, y: 180, w: 135, h: 120, cx: 202.5, cy: 240 },
+  "far-top": { x: 270, y: 60, w: 135, h: 120, cx: 337.5, cy: 120 },
+  "far-bottom": { x: 270, y: 180, w: 135, h: 120, cx: 337.5, cy: 240 },
 };
 
 export function resolveActiveSection(pathname) {
@@ -26,15 +27,15 @@ export function resolveActiveSection(pathname) {
 
 // --- Serve trajectory (Phase 2) ---
 
-// Near-baseline centre — where the ball launches from (no player yet).
-export const SERVE_ORIGIN = { x: 180, y: 520 };
+// Left-baseline centre — where the ball launches from (no player yet).
+export const SERVE_ORIGIN = { x: 35, y: 180 };
 
 // Control point for a lobbed quadratic arc: horizontally between the two
 // points, vertically above the higher of them (smaller y = higher on screen).
 export function serveControl(origin, target) {
   return {
     x: (origin.x + target.x) / 2,
-    y: Math.min(origin.y, target.y) - 150,
+    y: Math.min(origin.y, target.y) - 80,
   };
 }
 
@@ -55,11 +56,11 @@ export function bezierPoint(origin, control, target, t) {
 // --- Aim & landing (Phase 2 rework) ---
 
 // Doubles boundary rectangle in court units (matches Court.jsx's SVG boundary).
-export const COURT_BOUNDS = { x: 20, y: 20, w: 320, h: 500 };
+export const COURT_BOUNDS = { x: 20, y: 20, w: 500, h: 320 };
 
 // Landing point from a drag "pull" vector (pointer - origin). Mirrored like a
-// slingshot (pull down → launch up the court) and scaled by power, clamped so a
-// huge pull can't send the ball infinitely far.
+// slingshot (pull back → launch across the court) and scaled by power, clamped
+// so a huge pull can't send the ball infinitely far.
 export function landingFromPull(origin, pull, opts = {}) {
   const power = opts.power ?? 2.2;
   const maxReach = opts.maxReach ?? 560;
