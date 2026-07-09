@@ -1,125 +1,117 @@
 import { useState } from "react";
 import { useReveal } from "../hooks/useReveal";
+import StatCard from "./broadcast/StatCard";
+import Badge from "./broadcast/Badge";
 
 const EXPERIENCE = [
   {
     company: "Grant Thornton",
+    tournament: "Grant Thornton Open",
     url: "https://www.grantthornton.ca",
     role: "Business Consulting Intern",
     year: "2024",
+    result: "def. 5 client projects",
     summary:
       "Analyzed market and regulatory datasets across 5 client projects, delivering data-driven insights for client strategy discussions.",
     tech: ["Excel", "Data Analysis", "Market Research"],
   },
   {
     company: "IESO",
+    tournament: "IESO Championships",
     url: "https://www.ieso.ca",
     role: "Data Analyst Intern",
     year: "2023",
+    result: "def. deploy time −25%",
     summary:
       "Built 30+ SQL queries for QA testing and streamlined 5 IT processes, reducing deployment time by 25%.",
     tech: ["SQL", "Python", "Identity Access Management"],
   },
   {
     company: "TekUncorked",
+    tournament: "TekUncorked Classic",
     url: "https://www.tekuncorked.com/",
     role: "Industrial ML Intern",
     year: "2022",
+    result: "def. energy disaggregation",
     summary:
       "Developed a supervised learning model using TensorFlow and Keras for household energy disaggregation.",
     tech: ["Python", "TensorFlow", "Keras"],
   },
 ];
 
-const ExperienceRow = ({ job, idx }) => {
+const MatchRow = ({ job }) => {
   const [open, setOpen] = useState(false);
-  const [ref, visible] = useReveal();
 
   return (
-    <div
-      ref={ref}
-      className={`reveal ${visible ? "visible" : ""}`}
-      style={{ transitionDelay: `${idx * 80}ms` }}
-    >
-      <div
-        className="group py-6 border-t border-slate-800 cursor-pointer select-none"
-        onClick={() => setOpen((p) => !p)}
+    <div className="border-b border-charcoal/10">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full text-left py-4 flex items-baseline justify-between gap-4"
       >
-        <div className="flex items-baseline justify-between gap-4">
-          <div className="flex items-baseline gap-5">
-            <span className="font-mono text-slate-600 text-xs w-5 shrink-0">
-              {String(idx + 1).padStart(2, "0")}
+        <div className="flex items-baseline gap-4 min-w-0">
+          <span className="font-mono text-charcoal/40 text-xs shrink-0">{job.year}</span>
+          <span className="min-w-0">
+            <span className="font-display font-bold text-charcoal block truncate">
+              {job.tournament}
             </span>
-            <div>
-              <a
-                href={job.url}
-                className="text-white text-lg font-semibold hover:text-violet-400 transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {job.company} ↗
-              </a>
-              <p className="text-slate-400 text-sm mt-0.5">{job.role}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="font-mono text-slate-500 text-sm">{job.year}</span>
-            <span className={`text-slate-600 text-xs transition-transform duration-200 ${open ? "rotate-180" : ""}`}>
-              ▾
+            <span className="font-mono text-[0.7rem] uppercase tracking-widest text-grass-dark">
+              {job.result}
             </span>
-          </div>
+          </span>
         </div>
+        <span
+          className={`text-wimbledon shrink-0 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
+          aria-hidden="true"
+        >
+          &#9662;
+        </span>
+      </button>
 
-        {open && (
-          <div className="mt-4 ml-10">
-            <p className="text-slate-400 text-sm leading-relaxed mb-3">
-              {job.summary}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {job.tech.map((t) => (
-                <span
-                  key={t}
-                  className="font-mono text-xs text-violet-400 bg-violet-950/30 border border-violet-800/30 px-2.5 py-0.5 rounded-full"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
+      {open && (
+        <div className="pb-5 pl-10">
+          <p className="text-charcoal/70 text-sm leading-relaxed mb-3">
+            <span className="font-semibold text-charcoal">{job.role}</span> — {job.summary}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            {job.tech.map((t) => (
+              <Badge key={t} tone="outline">
+                {t}
+              </Badge>
+            ))}
           </div>
-        )}
-      </div>
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors"
+          >
+            Visit {job.company} &#8599;
+          </a>
+        </div>
+      )}
     </div>
   );
 };
 
 const Experience = () => {
-  const [headerRef, headerVisible] = useReveal();
+  const [ref, visible] = useReveal();
 
   return (
-    <section id="experience" className="py-24 bg-slate-950 px-6 sm:px-12 lg:px-24">
-      <div className="max-w-3xl">
-        <div
-          ref={headerRef}
-          className={`reveal ${headerVisible ? "visible" : ""} mb-16`}
+    <section id="experience" className="px-6 sm:px-12 lg:px-24 py-16">
+      <div ref={ref} className={`max-w-3xl mx-auto reveal ${visible ? "visible" : ""}`}>
+        <StatCard
+          broadcast="Career Record"
+          title="Experience"
+          headerRight={<Badge tone="ball">Career 3&ndash;0</Badge>}
         >
-          <p className="font-mono text-slate-500 text-xs uppercase tracking-widest mb-6">
-            Work
-          </p>
-          <h2
-            className="font-display font-extrabold text-white leading-tight"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
-          >
-            Where I&apos;ve worked.
-          </h2>
-        </div>
-
-        <div>
           {EXPERIENCE.map((job, i) => (
-            <ExperienceRow key={i} job={job} idx={i} />
+            <MatchRow key={i} job={job} />
           ))}
-          <div className="border-t border-slate-800" />
-        </div>
+        </StatCard>
       </div>
     </section>
   );
