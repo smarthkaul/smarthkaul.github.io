@@ -2,7 +2,7 @@
 
 Guidance for AI agents (and humans) working in this repository. Read this before making changes.
 
-> **Tennis-broadcast redesign — Phases 0–1 shipped.** The site has been reskinned to a Wimbledon-broadcast palette and rebuilt around court navigation, per [`plan/2026-07-08-tennis-court-redesign-design.md`](plan/2026-07-08-tennis-court-redesign-design.md). The design sections below describe that shipped system. Phases 2–4 (a GSAP-driven flying ball, an SVG player mascot, and a cinematic cold-open intro) are designed but **not built yet** — navigation today is ball-less: clicking a court zone navigates and the section card erupts, full stop. Don't describe Phase 2+ features as present, and don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
+> **Tennis-broadcast redesign — Phases 0–2 shipped.** The site has been reskinned to a Wimbledon-broadcast palette, rebuilt around court navigation, and given a GSAP-driven ball serve, per [`plan/2026-07-08-tennis-court-redesign-design.md`](plan/2026-07-08-tennis-court-redesign-design.md). The design sections below describe that shipped system. Clicking a main-court zone now launches a neon ball that arcs from the baseline to the zone (Hawk-Eye dotted trail, impact ripple) before the section erupts. Phases 3–4 (an SVG player mascot the ball would serve from, and a cinematic cold-open intro) are designed but **not built yet** — there is still no player, just a ball originating from a fixed baseline point. Don't describe Phase 3+ features as present, and don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
 
 ## What this is
 
@@ -16,6 +16,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
 | Build tool | Vite 6 |
 | Styling | Tailwind CSS 3 (utility-first, no CSS modules) |
 | Routing | React Router DOM 7 |
+| Animation | `framer-motion` (section erupt/dock) + `gsap` / `@gsap/react` (ball serve trajectory) |
 | Linting | ESLint 9 (flat config) |
 | Hosting | GitHub Pages via GitHub Actions |
 | Fonts | Syne (display) + Inter (body), loaded from Google Fonts |
@@ -28,7 +29,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
 .
 ├── .github/workflows/deploy.yml   # CI/CD → GitHub Pages
 ├── AGENTS.md                      # this file
-├── plan/2026-07-08-tennis-court-redesign-design.md   # redesign spec (Phases 2-4 not built yet)
+├── plan/2026-07-08-tennis-court-redesign-design.md   # redesign spec (Phases 3-4 not built yet)
 └── website/
     ├── index.html                 # Vite entry HTML; <title> + meta description
     ├── vite.config.js             # react plugin + Vitest config (jsdom env, src/test/setup.js)
@@ -49,9 +50,9 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
         │   └── Pagenotfound.jsx   # 404 route
         ├── components/            # one file per page section, plus two chrome subfolders
         │   ├── broadcast/         # StatCard, Badge, Ticker — shared broadcast UI kit
-        │   └── court/             # Court (SVG), Hud, Hub, SectionMenu — navigation chrome
+        │   └── court/             # Court (SVG), Ball (GSAP serve), Hud, Hub, SectionMenu — navigation chrome
         ├── data/
-        │   └── sections.js        # SECTIONS / COURT / BOXES / resolveActiveSection
+        │   └── sections.js        # SECTIONS / COURT / BOXES / resolveActiveSection / serve trajectory (SERVE_ORIGIN, serveControl, servePathD, bezierPoint)
         ├── hooks/
         │   ├── useReveal.js               # IntersectionObserver scroll-reveal hook
         │   └── usePrefersReducedMotion.js # reduced-motion gate for all animation
@@ -71,20 +72,21 @@ main.jsx
               └── Footer
 ```
 
-There is no more scrolling stack of sections. `CourtStage.jsx` is a state machine over the URL: it resolves the active section from `location.pathname` via `resolveActiveSection()` (`src/data/sections.js`), then renders one of two states:
+There is no more scrolling stack of sections. `CourtStage.jsx` is a state machine over the URL plus a `serveTarget` state that drives the ball: it resolves the active section from `location.pathname` via `resolveActiveSection()` (`src/data/sections.js`), then renders one of two states:
 
 - **No active section (`/`):** the `Hub` (name, animated typewriter tagline, social links, skills `Ticker`) above a full-size `Court` — an SVG tennis court whose four service-box zones (positions defined by `SECTIONS`/`BOXES` in `src/data/sections.js`) are clickable buttons.
 - **Active section (`/about`, `/experience`, `/projects`, `/contact`):** the matching component mounts inside a `framer-motion` overlay that scales in ("erupts") from the clicked zone's centre — `transformOrigin` is computed from that zone's `BOXES` entry — while the `Court` shrinks and docks into a `Hud` fixed in a corner, so another zone is reachable without returning to `/`.
 
-Clicking a zone just calls `navigate("/" + id)`; each section is a real, bookmarkable route, not an anchor scroll. `usePrefersReducedMotion()` gates the erupt/dock transitions down to instant opacity swaps. GitHub Pages doesn't natively support this kind of deep link, so `public/404.html` plus the redirect shim in `index.html` round-trip a deep link through the SPA (the [rafgraph technique](https://github.com/rafgraph/spa-github-pages)).
+Clicking a zone on the main court calls `startServe(id)` rather than navigating immediately: it sets `serveTarget` to the resolved section, which mounts `Ball` (`components/court/Ball.jsx`). `Ball` runs a GSAP timeline along a quadratic bézier (`serveControl`/`servePathD`/`bezierPoint` in `src/data/sections.js`) from a fixed baseline point (`SERVE_ORIGIN`) to the zone's `BOXES` centre, drawing a dotted Hawk-Eye trail and an impact ripple on landing; `handleServeComplete()` then clears `serveTarget` and calls `navigate("/" + id)`, at which point the section erupts as before. Each section is still a real, bookmarkable route, not an anchor scroll — the serve is a visual prelude to the same navigation, not a replacement for it. `usePrefersReducedMotion()` bypasses the serve entirely (navigates instantly) and gates the erupt/dock transitions down to instant opacity swaps. The docked `Court` inside the `Hud` navigates instantly too — the ball serve only plays from the full-size main court. GitHub Pages doesn't natively support this kind of deep link, so `public/404.html` plus the redirect shim in `index.html` round-trip a deep link through the SPA (the [rafgraph technique](https://github.com/rafgraph/spa-github-pages)).
 
-**There is no flying ball and no player mascot yet.** Those are Phase 2 and Phase 3 of the redesign (see the plan doc) — navigation today is just "click zone → section erupts."
+**There is still no player mascot.** That's Phase 3 of the redesign (see the plan doc) — the ball serves from a fixed baseline point (`SERVE_ORIGIN`), not from a player or racket. Don't describe a player as present.
 
 ### The sections
 
 - **Hub** (`components/court/Hub.jsx`) — landing content shown at `/`: name + animated typewriter tagline (self-contained `setTimeout`/`useEffect` typing logic), social links, and a skills `Ticker`.
 - **Court** (`components/court/Court.jsx`) — the SVG tennis court: decorative lines/net plus four zone `<button>`s positioned from `BOXES`. The same component renders full-size on `/` and docked (compact, label-less, via the `docked` prop) inside the `Hud`.
-- **Hud** (`components/court/Hud.jsx`) — fixed corner panel shown once a section is active; wraps the docked `Court` and the active section's label.
+- **Ball** (`components/court/Ball.jsx`) — the GSAP-driven serve: an idle bob at `SERVE_ORIGIN` when no zone is targeted, and a bézier flight (ball + dotted trail + impact ripple) to the clicked zone when `CourtStage` sets `serveTarget`. Only mounted over the full-size main court, not the docked `Hud` court.
+- **Hud** (`components/court/Hud.jsx`) — fixed corner panel shown once a section is active; wraps the docked `Court` (instant navigation, no serve) and the active section's label.
 - **SectionMenu** (`components/court/SectionMenu.jsx`) — accessible dropdown in the Navbar; lists `/` plus every entry in `SECTIONS` as plain links, for discovery beyond the court zones.
 - **About** — `StatCard` ("The Player"): bio prose, a stat `<dl>`, and skill `Badge`s.
 - **Experience** — `StatCard` ("Career Record"): accordion list of jobs; data in the `EXPERIENCE` array; each row expands to show summary + tech `Badge`s.
@@ -140,7 +142,7 @@ npm run test:watch # Vitest in watch mode
 
 ## Design consistency
 
-The site runs on the tennis-broadcast system shipped in Phases 0–1 (palette + court navigation, see the banner above). Keep it that way:
+The site runs on the tennis-broadcast system shipped in Phases 0–2 (palette + court navigation + ball serve, see the banner above). Keep it that way:
 
 - **Accent color is `ball`** (neon yellow) — highlights, active/hover states, and CTAs only, never body text on `cream` panels. Chrome (Navbar, Footer, Hud, `StatCard` headers, `Ticker`) is `wimbledon` purple; content panels are `cream` with `charcoal` text; the page background is `grass`/`.court-turf`. Do not reintroduce `violet`, `indigo`, or `slate-950` — that was the pre-redesign palette.
 - **Headings use `font-display`** (Syne). This applies to route-level chrome too, not just section content (see `Pagenotfound.jsx`).
@@ -153,4 +155,4 @@ The site runs on the tennis-broadcast system shipped in Phases 0–1 (palette + 
 - When adding content (a job, project, link), edit the relevant data array — don't restructure the component. When adding, removing, or renaming a section, edit `SECTIONS`/`BOXES` in `src/data/sections.js` — don't hand-edit routes or nav links in multiple files.
 - Match the shipped Tailwind palette and typography rather than introducing new colors/fonts, and don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
 - Run `npm run lint`, `npm run test`, and `npm run build` from `website/` before finishing; a broken build blocks deploys.
-- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, the route resolver, `usePrefersReducedMotion` — plus a smoke test; it does not cover layout or interaction. Verify those visually with `npm run dev` when changing things like the typewriter, accordion, court-zone navigation, erupt/dock transitions, or the mobile menu.
+- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, the route resolver, `usePrefersReducedMotion` — plus a smoke test; it does not cover layout or interaction. Verify those visually with `npm run dev` when changing things like the typewriter, accordion, court-zone navigation, the ball serve, erupt/dock transitions, or the mobile menu.
