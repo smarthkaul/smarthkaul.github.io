@@ -2,8 +2,10 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { COURT, SERVE_ORIGIN, serveControl, servePathD, bezierPoint } from "../../data/sections";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
 const Ball = ({ target, onComplete }) => {
+  const reduced = usePrefersReducedMotion();
   const scope = useRef(null);
   const ballRef = useRef(null);
   const trailRef = useRef(null);
@@ -14,6 +16,7 @@ const Ball = ({ target, onComplete }) => {
     () => {
       if (target) return;
       gsap.set(ballRef.current, { attr: { cx: SERVE_ORIGIN.x, cy: SERVE_ORIGIN.y } });
+      if (reduced) return; // no idle animation under reduced motion — hold static
       gsap.to(ballRef.current, {
         attr: { cy: SERVE_ORIGIN.y - 8 },
         duration: 1.1,
@@ -22,7 +25,7 @@ const Ball = ({ target, onComplete }) => {
         repeat: -1,
       });
     },
-    { scope, dependencies: [target] }
+    { scope, dependencies: [target, reduced] }
   );
 
   // Serve: follow the bézier from origin to the target zone, then onComplete.
