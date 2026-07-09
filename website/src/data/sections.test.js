@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   SECTIONS, COURT, BOXES, resolveActiveSection,
   SERVE_ORIGIN, serveControl, servePathD, bezierPoint,
-  landingFromPull, pointInRect, classifyLanding,
+  landingFromPull, pointInRect, classifyLanding, COURT_BOUNDS,
 } from './sections'
 
 describe('SECTIONS', () => {
@@ -110,9 +110,15 @@ describe('aim & landing', () => {
     expect(pointInRect({ x: 0, y: 0 }, BOXES['far-top'])).toBe(false)
   })
 
-  it('classifyLanding: hit when inside a service box', () => {
+  it('classifyLanding: hit on a far service box', () => {
     const far = BOXES['far-top']
-    expect(classifyLanding({ x: far.cx, y: far.cy })).toEqual({ type: 'hit', sectionId: 'projects' })
+    expect(classifyLanding({ x: far.cx, y: far.cy })).toEqual({ type: 'hit', sectionId: 'experience' })
+  })
+
+  it('classifyLanding: hit on a target beyond the baseline (off the court)', () => {
+    const b = BOXES['beyond-top']
+    expect(b.cx).toBeGreaterThan(COURT_BOUNDS.x + COURT_BOUNDS.w) // genuinely past the baseline
+    expect(classifyLanding({ x: b.cx, y: b.cy })).toEqual({ type: 'hit', sectionId: 'about' })
   })
 
   it('classifyLanding: out when in-bounds but not in a box', () => {
@@ -120,8 +126,8 @@ describe('aim & landing', () => {
     expect(classifyLanding({ x: 70, y: 180 })).toEqual({ type: 'out' })
   })
 
-  it('classifyLanding: beyond when outside the court bounds', () => {
-    expect(classifyLanding({ x: 180, y: -40 })).toEqual({ type: 'beyond' })  // past top sideline
-    expect(classifyLanding({ x: 560, y: 180 })).toEqual({ type: 'beyond' })  // past far baseline
+  it('classifyLanding: beyond when off the court and missing the targets', () => {
+    expect(classifyLanding({ x: 180, y: -40 })).toEqual({ type: 'beyond' }) // above the court
+    expect(classifyLanding({ x: 600, y: 30 })).toEqual({ type: 'beyond' })  // past baseline, above the beyond target
   })
 })

@@ -40,7 +40,7 @@ const CourtStage = () => {
   const navigate = useNavigate();
   const reduced = usePrefersReducedMotion();
 
-  const MAX_PULL = 150; // tune: pull distance (court units) for full power
+  const MAX_PULL = 250; // tune: pull distance (court units) for full power
 
   const [aim, setAim] = useState(null);
   const [shot, setShot] = useState(null);
@@ -72,7 +72,7 @@ const CourtStage = () => {
     const pull = aim.pull;
     setAim(null);
     if (Math.hypot(pull.x, pull.y) < 6) return; // a tap, not a drag — no launch
-    setShot(landingFromPull(SERVE_ORIGIN, pull, { power: 2.2, maxReach: MAX_PULL * 3.6 }));
+    setShot(landingFromPull(SERVE_ORIGIN, pull, { power: 2.6, maxReach: 720 }));
   };
 
   const onLand = () => {
