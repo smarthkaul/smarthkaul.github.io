@@ -10,6 +10,7 @@ import Player from "../components/court/Player";
 import ServeTutorial from "../components/court/ServeTutorial";
 import OutCall from "../components/court/OutCall";
 import crowdAwwUrl from "../assets/crowd-aww.mp3";
+import crowdCheerUrl from "../assets/crowd-cheer.mp3";
 import About from "../components/About";
 import Experience from "../components/Experience";
 import Projects from "../components/Projects";
@@ -62,6 +63,19 @@ const CourtStage = () => {
     a.play().catch(() => {});
   };
 
+  const hitAudioRef = useRef(null);
+
+  const playHit = () => {
+    let a = hitAudioRef.current;
+    if (!a) {
+      a = new Audio(crowdCheerUrl);
+      a.volume = 0.5;
+      hitAudioRef.current = a;
+    }
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  };
+
   const toCourtCoords = (e) => {
     const rect = frameRef.current.getBoundingClientRect();
     return {
@@ -93,6 +107,7 @@ const CourtStage = () => {
     const result = classifyLanding(shot);
     setShot(null);
     if (result.type === "hit") {
+      playHit();
       navigate(`/${result.sectionId}`);
     } else if (result.type === "out") {
       playMiss();
