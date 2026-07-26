@@ -1,27 +1,7 @@
 import { useReveal } from "../hooks/useReveal";
 import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
-
-const PROJECTS = [
-  {
-    title: "NCAA March Madness Prediction Model",
-    hero: "0.1230",
-    heroLabel: "Brier score",
-    description:
-      "Ensemble ML model predicting tournament outcomes. Engineered features including seed differences, 14-day win rates, and adjusted season stats. Achieved a Brier Score of 0.1230 vs. 0.1041 benchmark.",
-    tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn"],
-    github: null,
-  },
-  {
-    title: "Energy Forecasting Model",
-    hero: "13+ yrs",
-    heroLabel: "data modeled",
-    description:
-      "SARIMA + VAR time series models on 13+ years of Canadian and US electricity data. Applied seasonal differencing, stationarity testing, and Granger causality analysis to quantify cross-source dependencies.",
-    tech: ["R", "SARIMA", "VAR", "Time Series"],
-    github: null,
-  },
-];
+import { PROJECTS } from "../data/projects";
 
 const ProjectCard = ({ project }) => (
   <StatCard broadcast="Highlight Reel" headerRight={<Badge tone="ball">Replay</Badge>}>
