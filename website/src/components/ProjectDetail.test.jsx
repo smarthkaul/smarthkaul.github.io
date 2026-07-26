@@ -30,7 +30,10 @@ describe('ProjectDetail', () => {
 
   it('renders list-style sections as an ordered list', () => {
     renderDetail('march-madness')
-    expect(screen.getByRole('heading', { name: 'Approach' })).toBeInTheDocument()
+    // march-madness has two `items` sections; "Feature engineering" is the first.
+    expect(
+      screen.getByRole('heading', { name: 'Feature engineering' })
+    ).toBeInTheDocument()
     expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(3)
   })
 

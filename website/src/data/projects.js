@@ -23,7 +23,7 @@ export const PROJECTS = [
             "Predict the outcome of every NCAA tournament matchup from historical game data, scored by Brier score rather than accuracy. That scoring choice drives everything downstream: a model that is confidently wrong is punished far harder than one that hedges, so the goal is a calibrated probability rather than a pick. The underlying data is discrete — wins, losses, box-score lines — and it points fairly consistently at possession as the thing that decides games.",
         },
         {
-          heading: "Approach",
+          heading: "Feature engineering",
           items: [
             "Season statistics per team: average points, rebounds, assists, and shooting efficiency.",
             "The same statistics computed for every opponent each team faced, so strength of schedule is priced in rather than assumed away.",
