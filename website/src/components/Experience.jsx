@@ -9,30 +9,33 @@ const EXPERIENCE = [
     url: "https://www.grantthornton.ca",
     role: "Business Consulting Intern",
     year: "2024",
-    result: "def. 5 client projects",
+    dates: "May – Aug 2024",
+    result: "5 client engagements",
     summary:
-      "Analyzed market and regulatory datasets across 5 client projects, delivering data-driven insights for client strategy discussions.",
-    tech: ["Excel", "Data Analysis", "Market Research"],
+      "Cleaned and structured large import–export and industry datasets, then turned them into analyses that went straight into client strategy discussions. Presented the findings myself — client meetings, decks, and written deliverables — which is where I learned how much of the work is making a result legible to someone who will not read the methodology.",
+    tech: ["Excel", "Data Cleaning", "Market & Regulatory Analysis"],
   },
   {
     company: "IESO",
     url: "https://www.ieso.ca",
     role: "Data Analyst Intern",
     year: "2023",
-    result: "def. deploy time −25%",
+    dates: "Sept – Dec 2023",
+    result: "30+ QA queries · deploy time −25%",
     summary:
-      "Built 30+ SQL queries for QA testing and streamlined 5 IT processes, reducing deployment time by 25%.",
+      "Ontario's electricity system operator. Wrote and ran 30+ SQL queries to QA the Identity Access Management platform, checking that its automated email triggers fired on the right accounts under the right conditions. Separately, streamlined five IT processes for distributing Anaconda and Python across the organization, cutting deployment time by about 25%.",
     tech: ["SQL", "Python", "Identity Access Management"],
   },
   {
     company: "TekUncorked",
     url: "https://www.tekuncorked.com/",
-    role: "Industrial ML Intern",
+    role: "Machine Learning Intern",
     year: "2022",
-    result: "def. energy disaggregation",
+    dates: "May – Aug 2022",
+    result: "Appliance-level energy disaggregation",
     summary:
-      "Developed a supervised learning model using TensorFlow and Keras for household energy disaggregation.",
-    tech: ["Python", "TensorFlow", "Keras"],
+      "Built a supervised model in TensorFlow and Keras for household energy disaggregation — inferring which individual appliances are drawing power from a single whole-home consumption signal. Tuned the architecture and hyperparameters until training was fast enough to run at scale, and documented the architecture, data assumptions, and measured performance for whoever picked it up next.",
+    tech: ["Python", "TensorFlow", "Keras", "Supervised Learning"],
   },
 ];
 
@@ -70,6 +73,9 @@ const MatchRow = ({ job }) => {
 
       {open && (
         <div className="pb-5 pl-10">
+          <p className="font-mono text-[0.7rem] uppercase tracking-widest text-charcoal/40 mb-2">
+            {job.dates}
+          </p>
           <p className="text-charcoal/70 text-sm leading-relaxed mb-3">
             <span className="font-semibold text-charcoal">{job.role}</span> — {job.summary}
           </p>
@@ -103,7 +109,7 @@ const Experience = () => {
         <StatCard
           broadcast="Career Record"
           title="Experience"
-          headerRight={<Badge tone="ball">Career 3&ndash;0</Badge>}
+          headerRight={<Badge tone="ball">3 internships &middot; 2022&ndash;2024</Badge>}
         >
           {EXPERIENCE.map((job, i) => (
             <MatchRow key={i} job={job} />
