@@ -105,9 +105,12 @@ export const PROJECTS = [
     github: null,                       // null renders no link
     detail: {
       broadcast: "Match Report",        // StatCard eyebrow
-      problem: "...",                   // one or two paragraphs
-      approach: ["...", "..."],         // ordered list of steps
-      results: [{ k: "Brier score", v: "0.1230" }],  // rendered as a <dl>
+      sections: [                       // ordered narrative; each is prose OR a list
+        { heading: "The problem", body: "..." },
+        { heading: "Approach", items: ["...", "..."] },
+      ],
+      results: [{ k: "Brier score", v: "0.1230" }],  // OPTIONAL stat <dl>
+      resultsNote: "...",               // OPTIONAL prose under the stat line
       chart: {                          // OPTIONAL — omit entirely to render no figure
         src: chartUrl,                  // imported asset
         alt: "...",                     // required when chart is present
@@ -155,9 +158,13 @@ Contract:
 - Renders one `StatCard` with `broadcast={detail.broadcast}` and `title={project.title}`.
   The `title` matters for accessibility: `StatCard` renders it as the `<h2>` that
   `CourtStage`'s `focusSectionHeading` moves focus to on mount.
-- Body order: problem prose → `ChartFrame` (only if `detail.chart` exists) → approach list
-  → results `<dl>` → tech `Badge`s → GitHub link → "← All projects" link back to
-  `/projects`.
+- Body order: `detail.sections` in order, with `ChartFrame` inserted after the first
+  section (a figure above all prose reads as decoration; after the opening it reads as
+  evidence) → results `<dl>` → `resultsNote` → tech `Badge`s → "← All projects" and the
+  GitHub link.
+- A uniform `sections` array rather than named `problem`/`approach` fields: the site
+  writeup is six peer sections with no problem statement, and special-casing it in the
+  renderer would buy nothing. Headings carry the semantics instead.
 - Uses `useReveal()` for scroll-in, consistent with every other section.
 
 The `CourtStage` overlay already renders its own "← Back to court" link below the section,
@@ -249,6 +256,12 @@ demonstrates that Smarth can build something enjoyable; the StrictMode audio bug
 
 Vitest covers logic, not layout — consistent with the existing suite.
 
+**`src/test/setup.js`** needs an `IntersectionObserver` stub first. jsdom does not implement
+it, and `useReveal` constructs one on mount, so *any* test rendering a real section
+currently throws — which is why the existing smoke test renders a bare `<h1>` rather than a
+component. The stub reports the element as intersecting immediately so revealed content is
+queryable. This unblocks component tests for the whole codebase, not just this feature.
+
 **`src/data/sections.test.js`** (extend `resolveActiveSection`):
 
 - `/projects/march-madness` → the `projects` section
@@ -263,8 +276,11 @@ Vitest covers logic, not layout — consistent with the existing suite.
 - `getProject` returns the right entry, and `null` for an unknown slug
 - when `detail.chart` is present it has non-empty `alt`
 
-**`src/test/smoke.test.jsx`** — renders `/projects/this-site` and asserts the detail heading
-appears. `this-site` is chosen because its content is complete and not pending assets.
+**`src/components/ProjectDetail.test.jsx`** and **`src/components/Projects.test.jsx`** (new)
+— render through `MemoryRouter` and assert that `/projects` shows the card list, that
+`/projects/:slug` shows the detail page instead, and that an unknown slug redirects. Route
+coverage lives beside the components rather than in `smoke.test.jsx`, which stays a harness
+check. `this-site` is the fixture, since its content is complete and not pending assets.
 
 Visual verification stays manual via `npm run dev`, per the existing convention: the erupt
 animation from the projects box, the docked `Hud`, and chart rendering at mobile widths.
