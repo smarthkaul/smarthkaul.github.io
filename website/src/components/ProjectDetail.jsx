@@ -1,14 +1,12 @@
 import { Fragment } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useReveal } from "../hooks/useReveal";
 import { getProject } from "../data/projects";
 import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
 import ChartFrame from "./broadcast/ChartFrame";
 import StatList from "./broadcast/StatList";
-
-const linkClass =
-  "font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors";
+import ActionLink from "./broadcast/ActionLink";
 
 const DetailSection = ({ section }) => (
   <div className="mb-8">
@@ -80,18 +78,9 @@ const ProjectDetail = ({ slug }) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-6 border-t border-charcoal/10 pt-6">
-            <Link to="/projects" className={linkClass}>
-              &larr; All projects
-            </Link>
-            {project.github && (
-              <a
-                href={project.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={linkClass}
-              >
-                View the code &#8599;
-              </a>
+            <ActionLink to="/projects">&larr; All projects</ActionLink>
+            {project.codeUrl && (
+              <ActionLink href={project.codeUrl}>View the code &#8599;</ActionLink>
             )}
           </div>
         </StatCard>

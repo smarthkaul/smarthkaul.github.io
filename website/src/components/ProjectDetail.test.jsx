@@ -60,7 +60,7 @@ describe('ProjectDetail', () => {
     expect(screen.queryByText(/course project/i)).not.toBeInTheDocument()
   })
 
-  it('links to the code when a github url is present', () => {
+  it('links to the code when a code url is present', () => {
     renderDetail('this-site')
     const link = screen.getByRole('link', { name: /view the code/i })
     expect(link).toHaveAttribute('href', 'https://github.com/smarthkaul/smarthkaul.github.io')
@@ -68,7 +68,7 @@ describe('ProjectDetail', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('omits the code link when github is null', () => {
+  it('omits the code link when codeUrl is null', () => {
     renderDetail('energy-forecasting')
     expect(screen.queryByRole('link', { name: /view the code/i })).not.toBeInTheDocument()
   })

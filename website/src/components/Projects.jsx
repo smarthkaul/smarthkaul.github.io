@@ -1,13 +1,11 @@
 import { useEffect, useRef } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useReveal } from "../hooks/useReveal";
 import { PROJECTS } from "../data/projects";
 import ProjectDetail from "./ProjectDetail";
 import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
-
-const cardLinkClass =
-  "font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors";
+import ActionLink from "./broadcast/ActionLink";
 
 const ProjectCard = ({ project }) => (
   <StatCard broadcast="Highlight Reel" headerRight={<Badge tone="ball">Replay</Badge>}>
@@ -28,29 +26,21 @@ const ProjectCard = ({ project }) => (
       </div>
     </div>
     <p className="text-charcoal/70 leading-relaxed mb-5">{project.description}</p>
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap gap-2">
-        {project.tech.map((t) => (
-          <Badge key={t} tone="outline">
-            {t}
-          </Badge>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center gap-4 shrink-0">
-        <Link to={`/projects/${project.slug}`} className={cardLinkClass}>
-          Match report &rarr;
-        </Link>
-        {project.github && (
-          <a
-            href={project.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cardLinkClass}
-          >
-            Full match &#8599;
-          </a>
-        )}
-      </div>
+    <div className="flex flex-wrap gap-2 mb-5">
+      {project.tech.map((t) => (
+        <Badge key={t} tone="outline">
+          {t}
+        </Badge>
+      ))}
+    </div>
+    {/* Actions get their own row rather than sharing one with the badges: the
+        badge count varies per project and would otherwise shove the links to a
+        different spot on every card. Mirrors ProjectDetail's actions row. */}
+    <div className="flex flex-wrap items-center gap-6 border-t border-charcoal/10 pt-4">
+      <ActionLink to={`/projects/${project.slug}`}>Match report &rarr;</ActionLink>
+      {project.codeUrl && (
+        <ActionLink href={project.codeUrl}>View the code &#8599;</ActionLink>
+      )}
     </div>
   </StatCard>
 );

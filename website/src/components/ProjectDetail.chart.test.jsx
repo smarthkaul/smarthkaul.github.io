@@ -15,7 +15,7 @@ vi.mock('../data/projects', () => ({
           heroLabel: 'metric',
           description: 'stub',
           tech: ['R'],
-          github: null,
+          codeUrl: null,
           detail: {
             broadcast: 'Match Report',
             sections: [

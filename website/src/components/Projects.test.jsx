@@ -33,6 +33,18 @@ describe('Projects', () => {
     ])
   })
 
+  it('shows a code link only on the cards that have one', () => {
+    renderAt('/projects')
+    // march-madness (Colab) and this-site (repo) have one; energy-forecasting
+    // is still null, and must render no link rather than a dead one.
+    const codeLinks = screen.getAllByRole('link', { name: /view the code/i })
+    expect(codeLinks).toHaveLength(2)
+    for (const link of codeLinks) {
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    }
+  })
+
   it('renders the detail page at /projects/:slug instead of the list', () => {
     renderAt('/projects/this-site')
     expect(

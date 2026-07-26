@@ -21,6 +21,8 @@ const Contact = () => {
 
           <a
             href="mailto:smarth.kaul@mail.utoronto.ca"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-3 bg-wimbledon hover:bg-grass text-white font-display font-bold px-6 py-4 rounded-xl transition-colors mb-3"
           >
             <span>Return serve</span>

@@ -60,9 +60,9 @@ describe('PROJECTS', () => {
     }
   })
 
-  it('types github as a URL or null, never undefined', () => {
+  it('types codeUrl as a URL or null, never undefined', () => {
     for (const p of PROJECTS) {
-      expect(p.github === null || typeof p.github === 'string').toBe(true)
+      expect(p.codeUrl === null || typeof p.codeUrl === 'string').toBe(true)
     }
   })
 
