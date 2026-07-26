@@ -56,7 +56,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
         │   ├── CourtStage.jsx     # court-navigation state machine (see Rendering architecture)
         │   └── Pagenotfound.jsx   # 404 route
         ├── components/            # one file per page section, plus two chrome subfolders
-        │   ├── broadcast/         # StatCard, Badge, Ticker — shared broadcast UI kit
+        │   ├── broadcast/         # StatCard, Badge — shared broadcast UI kit
         │   └── court/             # Court (SVG), Ball (GSAP aim + flight), Player, ColdOpen, Hud, SectionMenu, OutCall, ServeTutorial — navigation chrome
         ├── data/
         │   └── sections.js        # SECTIONS / COURT / BOXES / COURT_BOUNDS / resolveActiveSection / flight math (SERVE_ORIGIN, serveControl, servePathD, bezierPoint) / aim & landing (landingFromPull, pointInRect, classifyLanding)
@@ -115,9 +115,9 @@ Navigating from the hub is an aim-and-launch drag, driven by a pointer state mac
 - Content is **data-driven**: declare an `UPPER_CASE` const array/object at the top of the file (`EXPERIENCE`, `PROJECTS`, `SECTIONS`, `BOXES`) and `.map()` over it. To add a job or project, edit the array — don't hand-write JSX rows.
 
 **Styling**
-- Tailwind utility classes inline. No separate CSS files per component; global custom CSS lives only in `src/index.css` (`.court-turf` background, ticker/pulse/blink keyframes, reduced-motion overrides).
+- Tailwind utility classes inline. No separate CSS files per component; global custom CSS lives only in `src/index.css` (`.court-turf` background, the `zone-pulse` keyframes, `.reveal` scroll-in, reduced-motion overrides).
 - Use inline `style={{ fontSize: "clamp(...)" }}` for fluid/responsive font sizes — this is the established pattern for large display headings.
-- **Palette (`website/tailwind.config.js`):** `grass` (court green — page background via `.court-turf`), `wimbledon` (purple — chrome: Navbar, Footer, Hud, `StatCard` headers, `Ticker`), `cream` (`StatCard`/content-panel background), `charcoal` (body text on cream panels), `ball` (neon yellow — accent only: highlights, active states, CTAs; never body text).
+- **Palette (`website/tailwind.config.js`):** `grass` (court green — page background via `.court-turf`), `wimbledon` (purple — chrome: Navbar, Footer, Hud, `StatCard` headers), `cream` (`StatCard`/content-panel background), `charcoal` (body text on cream panels), `ball` (neon yellow — accent only: highlights, active states, CTAs; never body text).
 - **Typography:** `font-display` (Syne) for headings, `font-mono` for eyebrow/broadcast labels and metadata, default sans (Inter) for body text on cream panels.
 - **Broadcast eyebrow pattern:** `font-mono text-ball text-xs uppercase tracking-widest`, set inside a `StatCard`'s purple header (the "broadcast" label, e.g. "The Player", "Career Record").
 - **Content shell pattern:** section content lives inside a `StatCard` (cream card, purple header) rather than a bare `<section>` on a dark background. The page background comes from the outer `.court-turf` wrapper, not per-section classes; sections still wrap their `StatCard` in `<section id="..." className="px-6 sm:px-12 lg:px-24 py-16">` with an inner `max-w-3xl` container.
@@ -177,9 +177,10 @@ Because there's no prerendering (a stated non-goal), every route shares this one
 
 The site runs on the tennis-broadcast system shipped in Phases 0–4 (palette + court navigation + ball serve + player + cold-open, see the banner above). Keep it that way:
 
-- **Accent color is `ball`** (neon yellow) — highlights, active/hover states, and CTAs only, never body text on `cream` panels. Chrome (Navbar, Footer, Hud, `StatCard` headers, `Ticker`) is `wimbledon` purple; content panels are `cream` with `charcoal` text; the page background is `grass`/`.court-turf`. Do not reintroduce `violet`, `indigo`, or `slate-950` — that was the pre-redesign palette.
+- **Accent color is `ball`** (neon yellow) — highlights, active/hover states, and CTAs only, never body text on `cream` panels. Chrome (Navbar, Footer, Hud, `StatCard` headers) is `wimbledon` purple; content panels are `cream` with `charcoal` text; the page background is `grass`/`.court-turf`. Do not reintroduce `violet`, `indigo`, or `slate-950` — that was the pre-redesign palette.
 - **Headings use `font-display`** (Syne). This applies to route-level chrome too, not just section content (see `Pagenotfound.jsx`).
 - The favicon at `public/favicon.svg` is an `SK` monogram in the shipped palette (`wimbledon` purple background, `ball` neon lettering). Keep it in the broadcast palette if you rebrand.
+- There is no ticker. `Ticker` shipped in Phase 0 as part of the broadcast kit, then lost its only mount when the `Hub` block was replaced by the full-viewport court in Phase 2; it sat unrendered for two phases and was deleted along with its `animate-ticker` CSS. The unused `.cursor-blink` keyframes went with it (same cause — the `Hub`'s typewriter). If you want a ticker, add one deliberately with a real home rather than restoring dead code.
 - There is no blog. A `Blog.jsx` component previously existed as an orphaned placeholder and was removed. If you add one, follow the current conventions (broadcast palette, `StatCard`/`Badge`, `font-display` headings, `useReveal` for scroll-in) rather than reviving the old placeholder patterns.
 
 ## Guardrails for agents
