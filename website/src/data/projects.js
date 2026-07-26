@@ -65,8 +65,7 @@ export const PROJECTS = [
       "SARIMA and VAR models across six series of Canadian and US electricity supply, asking whether generation sources actually predict one another once seasonality is removed.",
     tech: ["R", "SARIMA", "VAR", "Granger Causality", "STL"],
     team: "Group course project (STAD57)",
-    // Set to a gist or repo URL to surface a code link. null renders none.
-    codeUrl: null,
+    codeUrl: "https://gist.github.com/smarthkaul/4a601da41fe99f1062e8fe77242b8594",
     detail: {
       broadcast: "Match Report",
       sections: [

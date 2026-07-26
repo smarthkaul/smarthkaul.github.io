@@ -33,12 +33,13 @@ describe('Projects', () => {
     ])
   })
 
-  it('shows a code link only on the cards that have one', () => {
+  it('gives every card a code link that opens externally', () => {
     renderAt('/projects')
-    // march-madness (Colab) and this-site (repo) have one; energy-forecasting
-    // is still null, and must render no link rather than a dead one.
+    // All three now publish code: a Colab notebook, a gist, and this repo.
+    // The null case (a card rendering no link at all) is covered against a
+    // stub in ProjectDetail.chart.test.jsx, since no real project hits it.
     const codeLinks = screen.getAllByRole('link', { name: /view the code/i })
-    expect(codeLinks).toHaveLength(2)
+    expect(codeLinks).toHaveLength(3)
     for (const link of codeLinks) {
       expect(link).toHaveAttribute('target', '_blank')
       expect(link).toHaveAttribute('rel', 'noopener noreferrer')
