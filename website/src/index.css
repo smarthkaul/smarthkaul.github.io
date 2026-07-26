@@ -30,15 +30,6 @@ body {
   );
 }
 
-/* Broadcast ticker */
-@keyframes ticker {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.animate-ticker {
-  animation: ticker 30s linear infinite;
-}
-
 /* Court zone breathing pulse */
 @keyframes zonePulse {
   0%, 100% { opacity: 0.85; }
@@ -59,15 +50,6 @@ body {
   transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Cursor blink for typewriter */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-.cursor-blink {
-  animation: blink 0.8s step-end infinite;
-}
-
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -85,9 +67,7 @@ body {
 /* Reduced motion: neutralize all decorative animation */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .animate-ticker { animation: none; }
   .zone-pulse { animation: none; }
-  .cursor-blink { animation: none; }
   .reveal { opacity: 1; transform: none; }
   .reveal.visible { transition: none; }
   .animate-pulse,
