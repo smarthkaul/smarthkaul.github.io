@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import headUrl from "../../assets/player/head.svg";
-import bodyUrl from "../../assets/player/body.svg";
-import leftArmUrl from "../../assets/player/left-arm.svg";
-import rightArmUrl from "../../assets/player/right-arm.svg";
+import headUrl from "../../assets/player/head.png";
+import bodyUrl from "../../assets/player/body.png";
+import leftArmUrl from "../../assets/player/left-arm.png";
+import rightArmUrl from "../../assets/player/right-arm.png";
 import introThemeUrl from "../../assets/intro-theme.m4a";
 import headshotUrl from "../../assets/headshot.jpg";
 

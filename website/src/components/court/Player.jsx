@@ -2,10 +2,10 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { COURT } from "../../data/sections";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
-import headUrl from "../../assets/player/head.svg";
-import bodyUrl from "../../assets/player/body.svg";
-import leftArmUrl from "../../assets/player/left-arm.svg";
-import rightArmUrl from "../../assets/player/right-arm.svg";
+import headUrl from "../../assets/player/head.png";
+import bodyUrl from "../../assets/player/body.png";
+import leftArmUrl from "../../assets/player/left-arm.png";
+import rightArmUrl from "../../assets/player/right-arm.png";
 
 // Player assembled from the Figma-cut image parts, standing at the left baseline
 // facing the court. Every placement below is in court-viewBox units and meant to
