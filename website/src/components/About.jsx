@@ -9,7 +9,7 @@ const PROFILE = [
   { k: "Plays", v: "Right-handed · Python, R, SQL" },
   { k: "Turned pro", v: "2022 — first ML internship" },
   { k: "Specialty", v: "Statistical ML & Data Mining" },
-  { k: "Graduating", v: "2026" },
+  { k: "Graduated", v: "2026 · UofT" },
 ];
 
 const SKILLS = [
@@ -39,7 +39,7 @@ const About = () => {
               className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover shrink-0 ring-4 ring-ball/70 shadow-md"
             />
             <p className="text-charcoal text-xl sm:text-2xl font-light leading-relaxed">
-              I&apos;m a final-year Statistics student at the University of Toronto, in the
+              I&apos;m a 2026 Statistics graduate of the University of Toronto, out of the
               Statistical Machine Learning and Data Mining specialist program.
             </p>
           </div>
@@ -48,7 +48,7 @@ const About = () => {
             around it: a TensorFlow model for household energy disaggregation at
             TekUncorked, SQL-driven QA on an identity access platform at Ontario&apos;s
             electricity system operator, and market and regulatory analysis for consulting
-            clients at Grant Thornton. Coursework since has pulled me further toward
+            clients at Grant Thornton. Final-year coursework pulled me further toward
             modelling — time series and statistical learning theory — which is where both
             projects here came from. The thing I keep circling back to is calibration:
             whether a number a model hands you can be trusted, and what it costs to find

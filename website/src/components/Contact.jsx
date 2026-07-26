@@ -14,10 +14,9 @@ const Contact = () => {
           headerRight={<Badge tone="ball">Match Point</Badge>}
         >
           <p className="text-charcoal/70 text-lg leading-relaxed mb-8 max-w-md">
-            I graduate from the University of Toronto in 2026 and I&apos;m looking for
-            full-time and internship roles in machine learning and data science. If you
-            have a role, a problem you&apos;re stuck on, or just want to talk — return
-            serve.
+            I graduated from the University of Toronto in 2026 and I&apos;m looking for
+            full-time roles in machine learning and data science. If you have a role, a
+            problem you&apos;re stuck on, or just want to talk — return serve.
           </p>
 
           <a
