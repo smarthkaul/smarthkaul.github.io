@@ -43,16 +43,14 @@ const About = () => {
               Statistical Machine Learning and Data Mining specialist program.
             </p>
           </div>
+          <p className="text-charcoal/70 text-base leading-relaxed mb-4">
+            I like building products that solve real problems, and I like doing that
+            through technology and data. The part I enjoy most is digging into the numbers
+            until they say something useful about what to build next.
+          </p>
           <p className="text-charcoal/70 text-base leading-relaxed mb-8">
-            Three internships in, my work has mostly sat where a model meets the system
-            around it: a TensorFlow model for household energy disaggregation at
-            TekUncorked, SQL-driven QA on an identity access platform at Ontario&apos;s
-            electricity system operator, and market and regulatory analysis for consulting
-            clients at Grant Thornton. Final-year coursework pulled me further toward
-            modelling — time series and statistical learning theory — which is where both
-            projects here came from. The thing I keep circling back to is calibration:
-            whether a number a model hands you can be trusted, and what it costs to find
-            out. Outside of that, tennis and guitar.
+            Outside of work I play and watch a lot of tennis, I&apos;m learning the guitar,
+            and I&apos;ll happily drive out to the cinema to catch the latest movie.
           </p>
           <StatList items={PROFILE} className="mb-8" />
           <div className="flex flex-wrap gap-2">
