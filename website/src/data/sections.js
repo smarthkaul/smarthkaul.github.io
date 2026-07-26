@@ -24,7 +24,7 @@ export const BOXES = {
 };
 
 export function resolveActiveSection(pathname) {
-  const id = (pathname || "").replace(/^\/+|\/+$/g, "");
+  const [id] = (pathname || "").replace(/^\/+|\/+$/g, "").split("/");
   return SECTIONS.find((s) => s.id === id) ?? null;
 }
 
