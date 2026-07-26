@@ -5,6 +5,17 @@ import Badge from "./broadcast/Badge";
 
 const EXPERIENCE = [
   {
+    company: "Mango Studios",
+    url: "https://mangostudios.com/",
+    role: "AI Software Developer",
+    year: "2026",
+    dates: "May 2026 – Present",
+    result: "6 retrieval variants · NDCG@5",
+    summary:
+      "Instrumented a customer-facing AI product that had no visibility into where users dropped off: an event-tracking schema across the web and Python services, migrated from NoSQL to PostgreSQL, which turned an unmeasured product into a per-session engagement dataset. Built the internal analytics application on top of it — conversion funnel, failure-mode distribution, won-vs-lost cohorts, and a rules engine that labels each session in plain language instead of by hand. Also ran the offline evaluation for replacing the production embedding model behind semantic search: six model and re-ranking variants scored on NDCG@5, against a Bradley–Terry ranking fit to human pairwise judgments.",
+    tech: ["Python", "PostgreSQL", "Embeddings & Semantic Search", "Offline Evaluation"],
+  },
+  {
     company: "Grant Thornton",
     url: "https://www.grantthornton.ca",
     role: "Business Consulting Intern",
@@ -109,7 +120,7 @@ const Experience = () => {
         <StatCard
           broadcast="Career Record"
           title="Experience"
-          headerRight={<Badge tone="ball">3 internships &middot; 2022&ndash;2024</Badge>}
+          headerRight={<Badge tone="ball">4 roles &middot; 2022&ndash;present</Badge>}
         >
           {EXPERIENCE.map((job, i) => (
             <MatchRow key={i} job={job} />
