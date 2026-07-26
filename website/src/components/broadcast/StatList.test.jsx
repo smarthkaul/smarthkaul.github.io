@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import StatList from './StatList'
 
 const items = [
@@ -9,11 +9,11 @@ const items = [
 
 describe('StatList', () => {
   it('renders each pair as a term and definition', () => {
-    const { container } = render(<StatList items={items} />)
-    expect(within(container).getByText('Ensemble')).toBeInTheDocument()
-    expect(within(container).getByText('0.1250')).toBeInTheDocument()
-    expect(within(container).getByText('Top Kaggle score')).toBeInTheDocument()
-    expect(within(container).getByText('0.09588')).toBeInTheDocument()
+    render(<StatList items={items} />)
+    expect(screen.getByText('Ensemble')).toBeInTheDocument()
+    expect(screen.getByText('0.1250')).toBeInTheDocument()
+    expect(screen.getByText('Top Kaggle score')).toBeInTheDocument()
+    expect(screen.getByText('0.09588')).toBeInTheDocument()
   })
 
   it('uses a definition list for semantics', () => {
