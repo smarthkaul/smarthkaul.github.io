@@ -31,7 +31,8 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
 ├── AGENTS.md                      # this file
 ├── plan/2026-07-08-tennis-court-redesign-design.md   # redesign spec (all phases now built)
 └── website/
-    ├── index.html                 # Vite entry HTML; <title> + meta description
+    ├── index.html                 # Vite entry HTML; <title>, meta description, Open Graph / Twitter card tags
+    ├── og-card.html               # SOURCE for public/og.png — standalone, not part of the build
     ├── vite.config.js             # react plugin + Vitest config (jsdom env, src/test/setup.js)
     ├── tailwind.config.js         # broadcast palette (grass/wimbledon/cream/charcoal/ball) + fonts
     ├── postcss.config.js          # tailwind + autoprefixer
@@ -39,6 +40,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
     ├── package.json
     ├── public/
     │   ├── favicon.svg            # SK monogram
+    │   ├── og.png                 # 1200×630 social preview card (generated — see below)
     │   └── 404.html               # GitHub Pages SPA-routing redirect shim
     └── src/
         ├── main.jsx               # React root, StrictMode
@@ -150,6 +152,26 @@ npm run test:watch # Vitest in watch mode
 - Deploys are serialized with a `pages` concurrency group; in-progress runs are cancelled by newer pushes.
 - **Do not commit `website/dist/`** — it's gitignored and built in CI.
 - This is a **user site** (`smarthkaul.github.io`), served from the domain root, so Vite's `base` stays `"/"`. Do not add a repo sub-path base.
+
+## Social preview (Open Graph)
+
+`website/index.html` carries the Open Graph and Twitter-card tags that build the preview box shown when the site is linked on LinkedIn, Slack, iMessage, X, or Discord. Two rules make or break this:
+
+- **The tags must stay in `index.html`.** Scrapers don't execute JavaScript, so nothing React renders is visible to them. Anything moved into a component silently stops working.
+- **`og:image` must be an absolute URL** (`https://smarthkaul.github.io/og.png`). A relative path fails on most platforms with no error — the card just renders without an image.
+
+Because there's no prerendering (a stated non-goal), every route shares this one card; `/projects` can't have its own.
+
+**Regenerating `public/og.png`:** edit `website/og-card.html` (a standalone page using the broadcast palette, real court geometry, and Google-hosted Syne/Inter), then screenshot it at exactly 1200×630:
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
+  --window-size=1200,630 --virtual-time-budget=8000 \
+  --screenshot=website/public/og.png "file://$PWD/website/og-card.html"
+```
+
+`og-card.html` is not a Vite entry point and is not copied into `dist/` — it's kept in the repo purely so the image can be edited later instead of redrawn. **Look at the PNG after regenerating**; the fonts load over the network, so a failed fetch silently falls back to system fonts. If you change the site's palette or court geometry, update this card too or the preview will misrepresent the site. Note that LinkedIn and Facebook cache preview cards aggressively — use their post-inspector tools to force a re-fetch after changing the image.
 
 ## Design consistency
 
