@@ -4,8 +4,10 @@ import headUrl from "../../assets/player/head.svg";
 import bodyUrl from "../../assets/player/body.svg";
 import leftArmUrl from "../../assets/player/left-arm.svg";
 import rightArmUrl from "../../assets/player/right-arm.svg";
+import introThemeUrl from "../../assets/intro-theme.m4a";
 
 const SEEN_KEY = "coldOpenSeen";
+const THEME_VOLUME = 0.2;
 
 // Broadcast "tale of the tape" — Smarth's real details.
 const TAPE = [
@@ -46,24 +48,54 @@ const ColdOpen = () => {
   const [done, setDone] = useState(!play);
   const rootRef = useRef(null);
   const tlRef = useRef(null);
+  const audioRef = useRef(null);
+  const finishedRef = useRef(false);
 
   const finish = () => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
     try {
       localStorage.setItem(SEEN_KEY, "1");
     } catch {
       /* ignore */
     }
     tlRef.current?.kill();
+    // Fade the theme out rather than cutting it. This tween is created outside
+    // the gsap.context below so it survives to complete the fade.
+    const a = audioRef.current;
+    if (a) {
+      gsap.to(a, {
+        volume: 0,
+        duration: 0.6,
+        onComplete: () => {
+          a.pause();
+          a.currentTime = 0;
+        },
+      });
+    }
     setDone(true);
   };
 
+  // The theme and the timeline are owned by ONE effect so there is exactly one
+  // audio element and it can never outlive the animation it belongs to.
   useEffect(() => {
     if (done) return;
+
+    const audio = new Audio(introThemeUrl);
+    audio.volume = THEME_VOLUME;
+    audioRef.current = audio;
+    let cancelled = false;
+
     const ctx = gsap.context(() => {
       gsap.set(".co-bumper-ball", { y: -70 });
-      gsap.set(".co-player", { opacity: 0, x: 290, y: -150 });
+      // Entry offset from his home spot. y is capped at -80: his head sits at
+      // y=95 in the court viewBox, so anything past about -90 pushes it above
+      // the viewBox top edge and the SVG clips it off.
+      gsap.set(".co-player", { opacity: 0, x: 290, y: -80 });
 
-      const tl = gsap.timeline({ onComplete: finish });
+      // Built paused: the show is released below, once we know whether the
+      // theme can play, so music and first frame begin on the same beat.
+      const tl = gsap.timeline({ paused: true, onComplete: finish });
       tlRef.current = tl;
 
       // 1 · Bumper — "Smarth Kaul" + the ball bouncing 3 times
@@ -76,7 +108,7 @@ const ColdOpen = () => {
       tl.set(".co-card-scene", { opacity: 1 })
         .from(".co-card", { opacity: 0, scale: 0.82, yPercent: 8, duration: 0.55, ease: "back.out(1.3)" })
         .from(".co-tape-row", { opacity: 0, x: -14, stagger: 0.08, duration: 0.3 }, "-=0.15")
-        .to({}, { duration: 4 });
+        .to({}, { duration: 2 });
 
       // 3 · Card transitions away as the court builds itself
       tl.set(".co-court-scene", { opacity: 1 })
@@ -85,16 +117,44 @@ const ColdOpen = () => {
         .from(".co-grass", { opacity: 0, duration: 0.4 }, "<0.15")
         .fromTo(".co-line", { strokeDashoffset: 720 }, { strokeDashoffset: 0, stagger: 0.05, duration: 0.7, ease: "power1.inOut" }, "<");
 
-      // 4 · Player enters top-centre and waddle-walks to his baseline spot
+      // 4 · Player enters top-centre and waddle-walks AROUND the court to his
+      // baseline spot: first left along the top, then down the left side.
+      // Two separate keyframes (not a diagonal) so he skirts the court, and a
+      // beat at the corner where he turns.
       tl.to(".co-player", { opacity: 1, duration: 0.2 })
-        .to(".co-player", { keyframes: [{ x: 170, y: -70, duration: 1.1 }, { x: 0, y: 0, duration: 1.5 }], ease: "none" }, "<")
-        .to(".co-player", { rotation: 4, transformOrigin: "50% 95%", duration: 0.24, yoyo: true, repeat: 10, ease: "sine.inOut" }, "<");
+        .to(
+          ".co-player",
+          {
+            keyframes: [
+              { x: 0, duration: 1.5, ease: "none" },
+              { x: 0, duration: 0.25 }, // pause + turn at the corner
+              { y: 0, duration: 1.4, ease: "none" },
+            ],
+          },
+          "<"
+        )
+        .to(".co-player", { rotation: 4, transformOrigin: "50% 95%", duration: 0.24, yoyo: true, repeat: 12, ease: "sine.inOut" }, "<");
 
       // 5 · Hand off to the live court
       tl.to(".co-court-scene", { opacity: 0, duration: 0.5, ease: "power2.in" }, "+=0.3");
     }, rootRef);
 
-    return () => ctx.revert();
+    // Release the show as soon as the play() promise settles — resolved (music
+    // is running) or rejected (browser blocked autoplay, so it plays silent).
+    // Either way the visuals start from frame 1, never mid-animation. The
+    // timeout is a safety net in case the promise never settles.
+    const start = () => {
+      if (!cancelled) tlRef.current?.play();
+    };
+    const guard = setTimeout(start, 400);
+    Promise.resolve(audio.play()).then(start, start);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(guard);
+      audio.pause();
+      ctx.revert();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
