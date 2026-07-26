@@ -44,11 +44,19 @@ describe('PROJECTS', () => {
     }
   })
 
-  it('requires alt text whenever a chart is present', () => {
+  it('gives every chart the full set of fields ChartFrame needs', () => {
+    // ChartFrame spreads detail.chart straight into an <img>. React drops
+    // undefined attributes silently, so a missing field degrades the page
+    // with no error — alt text vanishes, or the image stops reserving space.
     for (const p of PROJECTS) {
       if (!p.detail.chart) continue
-      expect(p.detail.chart.alt).toEqual(expect.any(String))
-      expect(p.detail.chart.alt.length).toBeGreaterThan(0)
+      const { src, alt, caption, width, height } = p.detail.chart
+      expect(src).toEqual(expect.any(String))
+      expect(caption).toEqual(expect.any(String))
+      expect(alt).toEqual(expect.any(String))
+      expect(alt.length).toBeGreaterThan(0)
+      expect(width).toEqual(expect.any(Number))
+      expect(height).toEqual(expect.any(Number))
     }
   })
 

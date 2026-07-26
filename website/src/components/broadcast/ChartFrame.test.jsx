@@ -29,9 +29,11 @@ describe('ChartFrame', () => {
     expect(img).toHaveAttribute('loading', 'lazy')
   })
 
-  it('omits the caption bar when no caption is given', () => {
-    render(<ChartFrame {...props} caption={undefined} />)
-    expect(screen.queryByText('Fig 1 — Calibration')).not.toBeInTheDocument()
+  it('omits the caption bar entirely when no caption is given', () => {
+    const { container } = render(<ChartFrame {...props} caption={undefined} />)
+    // Assert the element is gone, not just its text — an always-rendered
+    // empty <figcaption> would leave a stray bordered strip above the image.
+    expect(container.querySelector('figcaption')).toBeNull()
     expect(screen.getByRole('img', { name: props.alt })).toBeInTheDocument()
   })
 })
