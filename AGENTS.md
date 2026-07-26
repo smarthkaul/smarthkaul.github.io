@@ -131,6 +131,7 @@ Navigating from the hub is an aim-and-launch drag, driven by a pointer state mac
 **External links**
 - Always `target="_blank" rel="noopener noreferrer"` and an `aria-label` on icon-only links. This includes the Contact `mailto:` CTA, so clicking it hands off to the mail client without navigating the SPA away.
 - Inside the Projects section use `broadcast/ActionLink` rather than a hand-rolled `<a>`/`<Link>`: pass `href` for external (it applies the target/rel pair for you) or `to` for internal. It owns the one link treatment shared by the project cards and the detail pages.
+- Project figures live in `src/assets/charts/` as **WebP**, wired through `detail.chart` (`{ src, alt, caption, width, height }`) with `detail.chartAfter` giving the index of the section the figure follows — put it beside the section it is evidence for, not the intro. Both current charts were extracted from the source PDFs with `pdfimages` and converted with `cwebp -q 88`; keep any new one under ~150 KB.
 - A project's code link lives in `codeUrl` — **not** `github`. It holds whatever is public for that project (a repo, a shared Colab notebook); `null` renders no link.
 
 ## Commands

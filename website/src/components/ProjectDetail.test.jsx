@@ -71,6 +71,28 @@ describe('ProjectDetail', () => {
   // The codeUrl-is-null case moved to ProjectDetail.chart.test.jsx: every real
   // project now publishes code, so it can only be exercised against a stub.
 
+  it('renders the march-madness figure beside the section it supports', () => {
+    const { container } = renderDetail('march-madness')
+    expect(
+      screen.getByRole('img', { name: /highest-importance features in the XGBoost model/i })
+    ).toBeInTheDocument()
+    // The importance chart is evidence for "Selection and tuning", so it must
+    // follow that heading and precede "What actually won" — not sit up by the
+    // problem statement, where the reader has not met the features yet.
+    const nodes = [...container.querySelectorAll('h3, figure')]
+    const figureAt = nodes.findIndex((n) => n.tagName === 'FIGURE')
+    expect(nodes[figureAt - 1].textContent).toBe('Selection and tuning')
+    expect(nodes[figureAt + 1].textContent).toBe('What actually won')
+  })
+
+  it('renders the energy forecast figure beside the model comparison', () => {
+    const { container } = renderDetail('energy-forecasting')
+    expect(screen.getByRole('img', { name: /two-year forecast/i })).toBeInTheDocument()
+    const nodes = [...container.querySelectorAll('h3, figure')]
+    const figureAt = nodes.findIndex((n) => n.tagName === 'FIGURE')
+    expect(nodes[figureAt - 1].textContent).toBe('SARIMA versus VAR')
+  })
+
   it('always offers a way back to the project list', () => {
     renderDetail('this-site')
     expect(screen.getByRole('link', { name: /all projects/i })).toHaveAttribute(

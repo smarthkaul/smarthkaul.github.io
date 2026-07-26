@@ -1,3 +1,6 @@
+import marchMadnessChart from "../assets/charts/march-madness-importance.webp";
+import energyForecastChart from "../assets/charts/energy-forecast.webp";
+
 // Single source of truth for the Projects section. Both the list cards and the
 // per-project detail pages at /projects/:slug read from here. Array order is
 // display order — the modelling work comes before the site itself.
@@ -53,7 +56,15 @@ export const PROJECTS = [
       ],
       resultsNote:
         "Brier score is lower-is-better, so the leaderboard's 0.09588 is the number to beat and none of these reach it. The gap to the top of a public Kaggle leaderboard is a fair thing to lose; the ordering underneath it is the part worth explaining.",
-      // No chart yet. Add { src, alt, caption, width, height } once exported.
+      chartAfter: 2,
+      chart: {
+        src: marchMadnessChart,
+        alt:
+          "Horizontal bar chart of the twenty highest-importance features in the XGBoost model. Seed difference dominates at roughly 0.09 — more than three times the next features, the two teams' individual seeds at about 0.025 — followed by each team's mean point differential and opponent-adjusted rebounding.",
+        caption: "Top 20 features by XGBoost importance",
+        width: 1155,
+        height: 719,
+      },
     },
   },
   {
@@ -100,6 +111,15 @@ export const PROJECTS = [
             "A negative result, and a useful one. North American electricity supply is driven overwhelmingly by its own strong seasonal cycles, and each source is best forecast by a model of itself. The multivariate machinery earned its keep on exactly one of six series and produced only a handful of significant Granger-causal links. Reporting that plainly is more valuable than finding a way to make VAR look necessary — the practical recommendation is source-specific seasonal models, and the cross-border coordination story the data might have told simply is not there.",
         },
       ],
+      chartAfter: 3,
+      chart: {
+        src: energyForecastChart,
+        alt:
+          "Six panels of monthly net electricity supply from 2010 to 2023 — Canada and the United States across combustible fuels, nuclear, and hydro — each continuing into a two-year forecast with shaded prediction intervals. Every panel is SARIMA except United States combustible fuels, which is forecast with VAR.",
+        caption: "Two-year forecasts with prediction intervals · all six series",
+        width: 1400,
+        height: 630,
+      },
       results: [
         { k: "Coverage", v: "Jan 2010 – Apr 2023" },
         { k: "Series", v: "6 (2 countries × 3 sources)" },
