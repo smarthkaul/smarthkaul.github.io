@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useReveal } from "../hooks/useReveal";
 import { PROJECTS } from "../data/projects";
@@ -59,22 +60,48 @@ const Projects = () => {
   const [ref, visible] = useReveal();
   const { slug } = useParams();
 
-  if (slug) return <ProjectDetail slug={slug} />;
+  const stageRef = useRef(null);
+  const mountedRef = useRef(false);
+
+  // CourtStage focuses a section's heading when that section MOUNTS. Navigating
+  // between /projects and /projects/:slug keeps the same active section id, so
+  // it re-renders in place and that never re-fires — while the link the user
+  // just activated is removed from the DOM. Move focus here instead. Skipped on
+  // first mount, where CourtStage has already handled it.
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    const heading = stageRef.current?.querySelector("h2");
+    if (!heading) return;
+    heading.setAttribute("tabindex", "-1");
+    heading.focus();
+  }, [slug]);
+
+  if (slug)
+    return (
+      <div ref={stageRef}>
+        <ProjectDetail slug={slug} />
+      </div>
+    );
 
   return (
-    <section id="projects" className="px-6 sm:px-12 lg:px-24 py-16">
-      <div ref={ref} className={`max-w-3xl mx-auto reveal ${visible ? "visible" : ""}`}>
-        <h2 className="sr-only">Projects</h2>
-        <p className="font-mono text-cream text-xs uppercase tracking-widest mb-4">
-          Highlight Reel
-        </p>
-        <div className="grid grid-cols-1 gap-6">
-          {PROJECTS.map((project) => (
-            <ProjectCard key={project.slug} project={project} />
-          ))}
+    <div ref={stageRef}>
+      <section id="projects" className="px-6 sm:px-12 lg:px-24 py-16">
+        <div ref={ref} className={`max-w-3xl mx-auto reveal ${visible ? "visible" : ""}`}>
+          <h2 className="sr-only">Projects</h2>
+          <p className="font-mono text-cream text-xs uppercase tracking-widest mb-4">
+            Highlight Reel
+          </p>
+          <div className="grid grid-cols-1 gap-6">
+            {PROJECTS.map((project) => (
+              <ProjectCard key={project.slug} project={project} />
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 };
 

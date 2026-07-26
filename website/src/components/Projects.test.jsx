@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Projects from './Projects'
 
@@ -43,5 +43,30 @@ describe('Projects', () => {
     expect(
       screen.queryByRole('heading', { name: /March Madness/i })
     ).not.toBeInTheDocument()
+  })
+
+  // CourtStage focuses a section's heading on MOUNT. /projects and
+  // /projects/:slug resolve to the same active section id, so switching
+  // between them re-renders Projects in place rather than remounting it —
+  // CourtStage's mount-only focus callback never re-fires for that transition.
+  // Projects.jsx compensates with its own effect; these two tests pin down
+  // both halves of that behavior: no double-focus on first mount, and a real
+  // focus move on a real subsequent navigation.
+  it('does not steal focus on initial mount (CourtStage already handled it)', () => {
+    renderAt('/projects')
+    expect(document.activeElement).toBe(document.body)
+  })
+
+  it('moves focus to the detail heading after navigating from the list via a real link click', () => {
+    renderAt('/projects')
+    const links = screen.getAllByRole('link', { name: /match report/i })
+    // Order matches PROJECTS: march-madness, energy-forecasting, this-site.
+    const thisSiteLink = links[2]
+    expect(thisSiteLink).toHaveAttribute('href', '/projects/this-site')
+
+    fireEvent.click(thisSiteLink)
+
+    const heading = screen.getByRole('heading', { name: /This Site/i, level: 2 })
+    expect(document.activeElement).toBe(heading)
   })
 })
