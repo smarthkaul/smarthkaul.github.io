@@ -5,6 +5,7 @@ import bodyUrl from "../../assets/player/body.svg";
 import leftArmUrl from "../../assets/player/left-arm.svg";
 import rightArmUrl from "../../assets/player/right-arm.svg";
 import introThemeUrl from "../../assets/intro-theme.m4a";
+import headshotUrl from "../../assets/headshot.jpg";
 
 const SEEN_KEY = "coldOpenSeen";
 const THEME_VOLUME = 0.2;
@@ -107,6 +108,7 @@ const ColdOpen = () => {
       // 2 · Player card, alone, held ≥4s
       tl.set(".co-card-scene", { opacity: 1 })
         .from(".co-card", { opacity: 0, scale: 0.82, yPercent: 8, duration: 0.55, ease: "back.out(1.3)" })
+        .from(".co-card-photo", { scale: 0.5, opacity: 0, duration: 0.4, ease: "back.out(2)" }, "-=0.25")
         .from(".co-tape-row", { opacity: 0, x: -14, stagger: 0.08, duration: 0.3 }, "-=0.15")
         .to({}, { duration: 2 });
 
@@ -182,8 +184,17 @@ const ColdOpen = () => {
       {/* 2 · Player card (alone) */}
       <div className="co-card-scene absolute inset-0 flex items-center justify-center px-4" style={{ opacity: 0 }}>
         <div className="co-card w-full bg-cream text-charcoal rounded-2xl overflow-hidden shadow-2xl" style={{ maxWidth: 480 }}>
-          <div className="bg-wimbledon px-6 py-4 flex items-end justify-between gap-4">
-            <div>
+          <div className="bg-wimbledon px-6 py-4 flex items-center gap-4">
+            {/* alt="" — the name sits right beside it, so announcing the photo
+                would just repeat it. */}
+            <img
+              className="co-card-photo w-16 h-16 rounded-full object-cover shrink-0 ring-2 ring-ball"
+              src={headshotUrl}
+              alt=""
+              width="600"
+              height="800"
+            />
+            <div className="min-w-0 flex-1">
               <p className="font-mono text-ball text-[0.65rem] uppercase tracking-widest">Player introduction</p>
               <h2 className="font-display font-extrabold text-white text-3xl leading-tight">Smarth Kaul</h2>
             </div>
