@@ -10,9 +10,9 @@ export const PROJECTS = [
     slug: "march-madness",
     title: "NCAA March Madness Prediction Model",
     hero: "0.1250",
-    heroLabel: "Brier · lower is better",
+    heroLabel: "Brier · leader 0.0959",
     description:
-      "Predicting NCAA tournament matchups for the Kaggle competition. Opponent-adjusted season statistics, seed differences, and 14-day form, scored by Brier score rather than accuracy.",
+      "Every possible matchup in the 2025 NCAA tournament, predicted as a calibrated probability and scored by Brier rather than accuracy. Opponent-adjusted season statistics, seed differentials, and 14-day form. The regularized logistic regression matched the ensemble and beat XGBoost.",
     tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn", "GridSearchCV"],
     team: "Three-person course project (STAD68)",
     codeUrl: "https://colab.research.google.com/drive/1bP96pdm7lTWnZg8EFO6-8kEsH8NyWInU",
@@ -70,10 +70,10 @@ export const PROJECTS = [
   {
     slug: "energy-forecasting",
     title: "Forecasting North American Electricity Supply",
-    hero: "13 yrs",
-    heroLabel: "of monthly data",
+    hero: "5 of 6",
+    heroLabel: "series won by SARIMA",
     description:
-      "SARIMA and VAR models across six series of Canadian and US electricity supply, asking whether generation sources actually predict one another once seasonality is removed.",
+      "SARIMA and VAR across six series of Canadian and US electricity supply, asking whether generation sources actually predict one another once seasonality is removed. Almost nothing does — the univariate model wins five series of six, and one cross-border link survives.",
     tech: ["R", "SARIMA", "VAR", "Granger Causality", "STL"],
     team: "Group course project (STAD57)",
     codeUrl: "https://gist.github.com/smarthkaul/4a601da41fe99f1062e8fe77242b8594",
@@ -98,7 +98,7 @@ export const PROJECTS = [
         {
           heading: "SARIMA versus VAR",
           body:
-            "The final twelve months, May 2022 through April 2023, were held out for validation. SARIMA won on both RMSE and MAE for nearly every series; the single exception was US combustible fuels, where VAR edged it, and that series alone kept a VAR as its final model. Residual diagnostics flagged leftover autocorrelation on three series. Adding a seasonal MA term fixed Canadian nuclear and US hydro and lowered their AIC; on Canadian hydro it made things worse, so that model was left as it was rather than tuned into looking better.",
+            "The final twelve months, May 2022 through April 2023, were held out for validation. SARIMA won on both RMSE and MAE for five of the six series; the single exception was US combustible fuels, where VAR edged it, and that series alone kept a VAR as its final model. Residual diagnostics flagged leftover autocorrelation on three series. Adding a seasonal MA term lowered AIC on Canadian nuclear and US hydro — though on Canadian nuclear the Ljung–Box p-values did not actually improve, so that one was kept on the AIC argument alone. On Canadian hydro the extra term raised AIC, so that model was left as it was rather than tuned into looking better.",
         },
         {
           heading: "Do the sources move together?",
@@ -121,10 +121,11 @@ export const PROJECTS = [
         height: 630,
       },
       results: [
-        { k: "Coverage", v: "Jan 2010 – Apr 2023" },
-        { k: "Series", v: "6 (2 countries × 3 sources)" },
+        { k: "Coverage", v: "Jan 2010 – Apr 2023, monthly" },
+        { k: "Series", v: "6 · 2 countries × 3 sources" },
         { k: "Validation", v: "12-month holdout" },
-        { k: "Best model", v: "SARIMA, 5 of 6 series" },
+        { k: "Lower RMSE and MAE", v: "SARIMA on 5 of 6" },
+        { k: "Cross-border links", v: "1 · Canada → US nuclear" },
       ],
     },
   },
