@@ -55,9 +55,13 @@ const ProjectDetail = ({ slug }) => {
           {detail.sections.map((section, i) => (
             <Fragment key={section.heading}>
               <DetailSection section={section} />
-              {/* The figure sits after the opening section: above all prose it
-                  reads as decoration, after it as evidence. */}
-              {i === 0 && detail.chart && <ChartFrame {...detail.chart} />}
+              {/* A figure reads as decoration above the prose and as evidence
+                  after it, so it always follows a section. Which one is
+                  `chartAfter` — the section the chart actually supports.
+                  Defaults to the opening section. */}
+              {i === (detail.chartAfter ?? 0) && detail.chart && (
+                <ChartFrame {...detail.chart} />
+              )}
             </Fragment>
           ))}
 
