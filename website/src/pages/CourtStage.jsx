@@ -16,6 +16,10 @@ import Experience from "../components/Experience";
 import Projects from "../components/Projects";
 import Contact from "../components/Contact";
 
+// Crowd SFX playback level (0–1). Kept low so the reaction reads as ambience
+// behind the shot rather than a jump-scare on a quiet page.
+const SFX_VOLUME = 0.08;
+
 const SECTION_COMPONENTS = {
   about: About,
   experience: Experience,
@@ -56,7 +60,7 @@ const CourtStage = () => {
     let a = missAudioRef.current;
     if (!a) {
       a = new Audio(crowdAwwUrl);
-      a.volume = 0.5;
+      a.volume = SFX_VOLUME;
       missAudioRef.current = a;
     }
     a.currentTime = 0;
@@ -69,7 +73,7 @@ const CourtStage = () => {
     let a = hitAudioRef.current;
     if (!a) {
       a = new Audio(crowdCheerUrl);
-      a.volume = 0.5;
+      a.volume = SFX_VOLUME;
       hitAudioRef.current = a;
     }
     a.currentTime = 0;
