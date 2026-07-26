@@ -6,12 +6,22 @@ import headshotUrl from "../assets/headshot.jpg";
 
 const PROFILE = [
   { k: "Base", v: "Toronto, ON 🇨🇦" },
-  { k: "Plays", v: "Right-handed · Python / R" },
-  { k: "Turned pro", v: "2022" },
-  { k: "Specialty", v: "Machine Learning & Forecasting" },
+  { k: "Plays", v: "Right-handed · Python, R, SQL" },
+  { k: "Turned pro", v: "2022 — first ML internship" },
+  { k: "Specialty", v: "Statistical ML & Data Mining" },
+  { k: "Graduating", v: "2026" },
 ];
 
-const SKILLS = ["Machine Learning", "Statistics", "SQL", "Data Viz", "Python", "R"];
+const SKILLS = [
+  "Python",
+  "R",
+  "SQL",
+  "Scikit-learn",
+  "TensorFlow",
+  "PyTorch",
+  "Time Series Forecasting",
+  "Statistical Inference",
+];
 
 const About = () => {
   const [ref, visible] = useReveal();
@@ -29,16 +39,20 @@ const About = () => {
               className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover shrink-0 ring-4 ring-ball/70 shadow-md"
             />
             <p className="text-charcoal text-xl sm:text-2xl font-light leading-relaxed">
-              I&apos;m a Statistics student at the University of Toronto specializing in
-              machine learning and data science.
+              I&apos;m a final-year Statistics student at the University of Toronto, in the
+              Statistical Machine Learning and Data Mining specialist program.
             </p>
           </div>
           <p className="text-charcoal/70 text-base leading-relaxed mb-8">
-            I care about building things that are both technically sound and actually
-            useful — whether that&apos;s a forecasting model, a SQL pipeline, or a clean
-            analysis. My background spans academic research, enterprise data work, and
-            consulting, which gives me range. Outside of work: tennis, guitar, and trying
-            to learn something new every week.
+            Three internships in, my work has mostly sat where a model meets the system
+            around it: a TensorFlow model for household energy disaggregation at
+            TekUncorked, SQL-driven QA on an identity access platform at Ontario&apos;s
+            electricity system operator, and market and regulatory analysis for consulting
+            clients at Grant Thornton. Coursework since has pulled me further toward
+            modelling — time series and statistical learning theory — which is where both
+            projects here came from. The thing I keep circling back to is calibration:
+            whether a number a model hands you can be trusted, and what it costs to find
+            out. Outside of that, tennis and guitar.
           </p>
           <StatList items={PROFILE} className="mb-8" />
           <div className="flex flex-wrap gap-2">
