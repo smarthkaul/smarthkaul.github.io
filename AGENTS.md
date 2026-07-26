@@ -55,10 +55,11 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
         │   ├── CourtStage.jsx     # court-navigation state machine (see Rendering architecture)
         │   └── Pagenotfound.jsx   # 404 route
         ├── components/            # one file per page section, plus two chrome subfolders
-        │   ├── broadcast/         # StatCard, Badge — shared broadcast UI kit
+        │   ├── broadcast/         # StatCard, Badge, ChartFrame, StatList — shared broadcast UI kit
         │   └── court/             # Court (SVG), Ball (GSAP aim + flight), Player, ColdOpen, Hud, SectionMenu, OutCall, ServeTutorial — navigation chrome
         ├── data/
-        │   └── sections.js        # SECTIONS / COURT / BOXES / COURT_BOUNDS / resolveActiveSection / flight math (SERVE_ORIGIN, serveControl, servePathD, bezierPoint) / aim & landing (landingFromPull, pointInRect, classifyLanding)
+        │   ├── sections.js        # SECTIONS / COURT / BOXES / COURT_BOUNDS / resolveActiveSection / flight math (SERVE_ORIGIN, serveControl, servePathD, bezierPoint) / aim & landing (landingFromPull, pointInRect, classifyLanding)
+        │   └── projects.js        # PROJECTS / getProject — source for both the Projects list cards and the detail pages
         ├── hooks/
         │   ├── useReveal.js               # IntersectionObserver scroll-reveal hook
         │   └── usePrefersReducedMotion.js # reduced-motion gate for all animation
@@ -102,7 +103,7 @@ Navigating from the hub is an aim-and-launch drag, driven by a pointer state mac
 - **SectionMenu** (`components/court/SectionMenu.jsx`) — accessible dropdown in the Navbar; lists `/` plus every entry in `SECTIONS` as plain links. This is the keyboard/screen-reader/mobile fallback for navigation, since the hub's court zones aren't clickable — only draggable.
 - **About** — `StatCard` ("The Player"): bio prose, a stat `<dl>`, and skill `Badge`s.
 - **Experience** — `StatCard` ("Career Record"): accordion list of jobs; data in the `EXPERIENCE` array; each row expands to show summary + tech `Badge`s.
-- **Projects** — one `StatCard` per project ("Highlight Reel"); data in the `PROJECTS` array; optional GitHub link.
+- **Projects** — one `StatCard` per project ("Highlight Reel"); data in the `PROJECTS` array; optional GitHub link. Each project also has a detail page at `/projects/:slug`, rendered by `components/ProjectDetail.jsx`, which `Projects.jsx` delegates to when `useParams()` yields a slug.
 - **Contact** — `StatCard` ("Match Point"): blurb + `mailto:` CTA.
 - **Navbar / Footer** — chrome rendered by `Layout`, shared across routes.
 
@@ -111,7 +112,7 @@ Navigating from the hub is an aim-and-launch drag, driven by a pointer state mac
 **Components**
 - Functional components, arrow-function style, `export default` at the bottom.
 - One section per file. Keep a component's content, sub-components (e.g. `MatchRow`, `ProjectCard`), and data in the same file.
-- Content is **data-driven**: declare an `UPPER_CASE` const array/object at the top of the file (`EXPERIENCE`, `PROJECTS`, `SECTIONS`, `BOXES`) and `.map()` over it. To add a job or project, edit the array — don't hand-write JSX rows.
+- Content is **data-driven**: declare an `UPPER_CASE` const array/object (`EXPERIENCE` in `Experience.jsx`, `PROJECTS` in `src/data/projects.js`, `SECTIONS`/`BOXES` in `src/data/sections.js`) and `.map()` over it. To add a job or project, edit the array — don't hand-write JSX rows.
 
 **Styling**
 - Tailwind utility classes inline. No separate CSS files per component; global custom CSS lives only in `src/index.css` (`.court-turf` background, the `zone-pulse` keyframes, `.reveal` scroll-in, reduced-motion overrides).
@@ -122,7 +123,7 @@ Navigating from the hub is an aim-and-launch drag, driven by a pointer state mac
 - **Content shell pattern:** section content lives inside a `StatCard` (cream card, purple header) rather than a bare `<section>` on a dark background. The page background comes from the outer `.court-turf` wrapper, not per-section classes; sections still wrap their `StatCard` in `<section id="..." className="px-6 sm:px-12 lg:px-24 py-16">` with an inner `max-w-3xl` container.
 
 **Section IDs & navigation**
-- Sections are **routes**, not in-page anchors: each lives at `/<id>` (`/about`, `/experience`, `/projects`, `/contact`), matched by `resolveActiveSection()` against the `SECTIONS` array. `SECTIONS` (in `src/data/sections.js`) is the single source of truth for the route table (`App.jsx`), the court zone labels (`Court.jsx`), the `Hud`, and `SectionMenu` — edit it there, don't hand-edit routes or nav links in multiple files. Each `SECTIONS` entry also needs a matching `box` rectangle in the `BOXES` map (its position/size on the court, in SVG user units).
+- Sections are **routes**, not in-page anchors: each lives at `/<id>` (`/about`, `/experience`, `/projects`, `/contact`), matched by `resolveActiveSection()` against the `SECTIONS` array. `SECTIONS` (in `src/data/sections.js`) remains the single source of truth for the top-level section routes (`App.jsx`), the court zone labels (`Court.jsx`), the `Hud`, and `SectionMenu` — edit it there, don't hand-edit those routes or nav links in multiple files. Each `SECTIONS` entry also needs a matching `box` rectangle in the `BOXES` map (its position/size on the court, in SVG user units). One nested route is registered explicitly beside the `SECTIONS.map(...)` in `App.jsx` — `projects/:slug`, for the project detail pages — since it isn't a top-level section; that hand-added route is intentional, not drift.
 
 **Scroll reveal**
 - To animate a block in on scroll, use the `useReveal()` hook: `const [ref, visible] = useReveal();` then apply `ref` and `` className={`reveal ${visible ? "visible" : ""}`} ``. The `.reveal` / `.visible` CSS lives in `index.css`. Stagger multiple items with `style={{ transitionDelay: \`${idx * 80}ms\` }}`.
@@ -201,7 +202,7 @@ The site runs on the tennis-broadcast system shipped in Phases 0–4 (palette + 
 ## Guardrails for agents
 
 - Keep changes scoped to `website/` (plus `plan/` only if you're updating the design spec itself). There is no app source outside `website/`.
-- When adding content (a job, project, link), edit the relevant data array — don't restructure the component. When adding, removing, or renaming a section, edit `SECTIONS`/`BOXES` in `src/data/sections.js` — don't hand-edit routes or nav links in multiple files.
+- When adding content (a job, project, link), edit the relevant data array — don't restructure the component. When adding, removing, or renaming a top-level section, edit `SECTIONS`/`BOXES` in `src/data/sections.js` — don't hand-edit those routes or nav links in multiple files. The one nested route, `projects/:slug` in `App.jsx`, is registered by hand beside the `SECTIONS.map(...)` and is meant to stay that way — don't delete it while "cleaning up" routing.
 - Match the shipped Tailwind palette and typography rather than introducing new colors/fonts, and don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
 - Run `npm run lint`, `npm run test`, and `npm run build` from `website/` before finishing; a broken build blocks deploys.
-- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, the route resolver, `usePrefersReducedMotion` — plus a smoke test; it does not cover layout or interaction. Verify those visually with `npm run dev` when changing things like the accordion, the aim-and-launch ball serve, the court targets, the player's wind-up/swing, erupt/dock transitions, or the `SectionMenu`. The cold-open only plays once per browser — re-watch it at `http://localhost:5173/?intro`.
+- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, `src/data/projects.js`, the route resolver, `usePrefersReducedMotion` — plus component-render tests (`ProjectDetail`, `Projects`, `ChartFrame`, `StatList`) and `src/test/routes.test.jsx`, which renders the real `App` against the real route table; it does not cover visual layout. Verify layout and interaction visually with `npm run dev` when changing things like the accordion, the aim-and-launch ball serve, the court targets, the player's wind-up/swing, erupt/dock transitions, or the `SectionMenu`. The cold-open only plays once per browser — re-watch it at `http://localhost:5173/?intro`. `src/test/setup.js` registers `afterEach(cleanup)` — required because `vite.config.js` deliberately omits `globals: true`, so Testing Library cannot self-register it — plus an `IntersectionObserver` stub that `useReveal` needs; don't remove either.

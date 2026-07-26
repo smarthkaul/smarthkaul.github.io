@@ -45,7 +45,9 @@ describe('ProjectDetail', () => {
     expect(screen.getByText('0.09588')).toBeInTheDocument()
     // "0.1250" is both the hero badge and a results value, so it appears twice.
     expect(screen.getAllByText('0.1250')).toHaveLength(2)
-    expect(screen.getByText(/lower-is-better/)).toBeInTheDocument()
+    // "lower-is-better" now also appears in the "What actually won" section
+    // body, so match the resultsNote's own wording to keep this scoped to it.
+    expect(screen.getByText(/lower-is-better, so the leaderboard/)).toBeInTheDocument()
   })
 
   it('credits the team when the project has co-authors', () => {

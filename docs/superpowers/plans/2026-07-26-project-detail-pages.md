@@ -414,17 +414,26 @@ git commit -m "Move project data into src/data and add detail content"
 
 ---
 
-### Task 3: `ChartFrame` broadcast component
+### Task 3: `ChartFrame` and `StatList` broadcast components
 
-A screenshot exported from a notebook will not match the broadcast palette or typography. `ChartFrame` frames it as an artifact — a bordered panel with a mono caption bar — so it reads as analysis output rather than mismatched decoration.
+Two additions to the broadcast kit.
+
+`ChartFrame` frames an exported notebook screenshot as an artifact — a bordered panel with a mono caption bar — so it reads as analysis output rather than mismatched decoration, since the image will not match the palette or typography.
+
+`StatList` is the key/value stat line. `About.jsx` already renders exactly this markup inline for its profile `<dl>`, and `ProjectDetail` needs the same thing for its results. Rather than write a second copy, extract it and switch `About` over. `About` must render identically afterwards — this is a refactor, not a redesign.
 
 **Files:**
 - Create: `website/src/components/broadcast/ChartFrame.jsx`
 - Create: `website/src/components/broadcast/ChartFrame.test.jsx`
+- Create: `website/src/components/broadcast/StatList.jsx`
+- Create: `website/src/components/broadcast/StatList.test.jsx`
+- Modify: `website/src/components/About.jsx:42-54` (replace the inline `<dl>` with `<StatList>`)
 
 **Interfaces:**
 - Consumes: nothing from earlier tasks.
-- Produces: `<ChartFrame src alt caption width height />`. Task 4 spreads a `detail.chart` object straight into it, so the prop names must match the `Chart` shape from Task 2 exactly.
+- Produces:
+  - `<ChartFrame src alt caption width height />`. Task 4 spreads a `detail.chart` object straight into it, so the prop names must match the `Chart` shape from Task 2 exactly.
+  - `<StatList items={[{ k, v }]} className="" />`. Task 4 passes `detail.results`, which uses the same `{k, v}` shape as `About`'s `PROFILE`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -515,11 +524,123 @@ cd website && npm run test -- src/components/broadcast/ChartFrame.test.jsx
 
 Expected: PASS, all 4 tests.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Write the failing `StatList` test**
+
+Create `website/src/components/broadcast/StatList.test.jsx`:
+
+```jsx
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import StatList from './StatList'
+
+const items = [
+  { k: 'Ensemble', v: '0.1250' },
+  { k: 'Top Kaggle score', v: '0.09588' },
+]
+
+describe('StatList', () => {
+  it('renders each pair as a term and definition', () => {
+    render(<StatList items={items} />)
+    expect(screen.getByText('Ensemble')).toBeInTheDocument()
+    expect(screen.getByText('0.1250')).toBeInTheDocument()
+    expect(screen.getByText('Top Kaggle score')).toBeInTheDocument()
+    expect(screen.getByText('0.09588')).toBeInTheDocument()
+  })
+
+  it('uses a definition list for semantics', () => {
+    const { container } = render(<StatList items={items} />)
+    expect(container.querySelector('dl')).toBeInTheDocument()
+    expect(container.querySelectorAll('dt')).toHaveLength(2)
+    expect(container.querySelectorAll('dd')).toHaveLength(2)
+  })
+
+  it('appends a caller-supplied className to the list', () => {
+    const { container } = render(<StatList items={items} className="mb-4" />)
+    expect(container.querySelector('dl')).toHaveClass('mb-4')
+  })
+
+  it('renders an empty list without crashing', () => {
+    const { container } = render(<StatList items={[]} />)
+    expect(container.querySelectorAll('dt')).toHaveLength(0)
+  })
+})
+```
+
+- [ ] **Step 6: Run the test to verify it fails**
 
 ```bash
-git add website/src/components/broadcast/ChartFrame.jsx website/src/components/broadcast/ChartFrame.test.jsx
-git commit -m "Add ChartFrame for framing analysis figures"
+cd website && npm run test -- src/components/broadcast/StatList.test.jsx
+```
+
+Expected: FAIL with `Failed to resolve import "./StatList"`.
+
+- [ ] **Step 7: Implement `StatList`**
+
+Create `website/src/components/broadcast/StatList.jsx`. The markup is lifted verbatim from
+`About.jsx`'s profile `<dl>` so that component renders unchanged after the swap:
+
+```jsx
+// The broadcast stat line: a key/value list under a rule, used for the About
+// profile and for a project's results.
+const StatList = ({ items, className = "" }) => (
+  <dl
+    className={`grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 border-t border-charcoal/10 pt-6 ${className}`}
+  >
+    {items.map(({ k, v }) => (
+      <div
+        key={k}
+        className="flex items-baseline justify-between gap-4 border-b border-charcoal/10 py-2"
+      >
+        <dt className="font-mono text-xs uppercase tracking-widest text-charcoal/50">
+          {k}
+        </dt>
+        <dd className="text-charcoal font-medium text-right">{v}</dd>
+      </div>
+    ))}
+  </dl>
+);
+
+export default StatList;
+```
+
+- [ ] **Step 8: Run the test to verify it passes**
+
+```bash
+cd website && npm run test -- src/components/broadcast/StatList.test.jsx
+```
+
+Expected: PASS, all 4 tests.
+
+- [ ] **Step 9: Switch `About.jsx` to `StatList`**
+
+In `website/src/components/About.jsx`, add the import beside the other broadcast imports:
+
+```jsx
+import StatList from "./broadcast/StatList";
+```
+
+Then replace the entire `<dl>...</dl>` block (lines 42-54) with:
+
+```jsx
+          <StatList items={PROFILE} className="mb-8" />
+```
+
+`PROFILE` already uses the `{ k, v }` shape, so no data changes. The rendered output must be
+identical — the original `<dl>` carried `mb-8`, which is why it is passed through.
+
+- [ ] **Step 10: Verify the whole suite still passes**
+
+```bash
+cd website && npm run lint && npm run test
+```
+
+Expected: lint clean, all tests PASS.
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add website/src/components/broadcast/ChartFrame.jsx website/src/components/broadcast/ChartFrame.test.jsx website/src/components/broadcast/StatList.jsx website/src/components/broadcast/StatList.test.jsx website/src/components/About.jsx
+git commit -m "Add ChartFrame and StatList to the broadcast kit"
 ```
 
 ---
@@ -534,15 +655,27 @@ jsdom does not implement `IntersectionObserver`, and `useReveal` constructs one 
 - Create: `website/src/components/ProjectDetail.test.jsx`
 
 **Interfaces:**
-- Consumes: `getProject(slug)` and the `Project` / `Section` / `Chart` shapes from Task 2; `<ChartFrame src alt caption width height />` from Task 3.
+- Consumes: `getProject(slug)` and the `Project` / `Section` / `Chart` shapes from Task 2; `<ChartFrame src alt caption width height />` and `<StatList items className />` from Task 3.
 - Produces: `<ProjectDetail slug={string} />`. Task 5 renders exactly this from `Projects.jsx`.
 
 - [ ] **Step 1: Add the `IntersectionObserver` stub**
 
-Replace the contents of `website/src/test/setup.js` with:
+`website/src/test/setup.js` already registers RTL's `afterEach(cleanup)` — added in Task 3,
+because Vitest runs without `globals: true` and RTL cannot self-register cleanup in that
+mode. **Keep it.** Removing it makes every `render()` leak into `document.body`, and the
+`screen.*` queries in this task's tests will then match elements from earlier tests.
+
+Append the stub, leaving the existing imports and `afterEach` in place, so the file reads:
 
 ```js
+import { afterEach } from 'vitest'
+import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
+
+// Vitest runs without `globals: true`, so RTL cannot self-register its cleanup.
+// Without this, every render() leaks into document.body and later tests in the
+// same file match elements from earlier ones.
+afterEach(cleanup)
 
 // jsdom has no IntersectionObserver, but useReveal() constructs one on mount —
 // so without this, rendering any section that uses the reveal hook throws.
@@ -602,7 +735,10 @@ describe('ProjectDetail', () => {
 
   it('renders list-style sections as an ordered list', () => {
     renderDetail('march-madness')
-    expect(screen.getByRole('heading', { name: 'Approach' })).toBeInTheDocument()
+    // march-madness has two `items` sections; "Feature engineering" is the first.
+    expect(
+      screen.getByRole('heading', { name: 'Feature engineering' })
+    ).toBeInTheDocument()
     expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(3)
   })
 
@@ -680,6 +816,7 @@ import { getProject } from "../data/projects";
 import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
 import ChartFrame from "./broadcast/ChartFrame";
+import StatList from "./broadcast/StatList";
 
 const linkClass =
   "font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors";
@@ -737,21 +874,7 @@ const ProjectDetail = ({ slug }) => {
             </Fragment>
           ))}
 
-          {detail.results && (
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 border-t border-charcoal/10 pt-6 mb-4">
-              {detail.results.map(({ k, v }) => (
-                <div
-                  key={k}
-                  className="flex items-baseline justify-between gap-4 border-b border-charcoal/10 py-2"
-                >
-                  <dt className="font-mono text-xs uppercase tracking-widest text-charcoal/50">
-                    {k}
-                  </dt>
-                  <dd className="text-charcoal font-medium text-right">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
+          {detail.results && <StatList items={detail.results} className="mb-4" />}
 
           {detail.resultsNote && (
             <p className="text-charcoal/70 text-sm leading-relaxed mb-8">
@@ -904,6 +1027,14 @@ import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
 ```
 
+Then add this module-level constant directly below the imports, so the two card links share
+one definition:
+
+```jsx
+const cardLinkClass =
+  "font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors";
+```
+
 Then replace the `Projects` component at the bottom of the file with:
 
 ```jsx
@@ -946,10 +1077,7 @@ Still in `website/src/components/Projects.jsx`, replace the closing links row of
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-4 shrink-0">
-        <Link
-          to={`/projects/${project.slug}`}
-          className="font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors"
-        >
+        <Link to={`/projects/${project.slug}`} className={cardLinkClass}>
           Match report &rarr;
         </Link>
         {project.github && (
@@ -957,7 +1085,7 @@ Still in `website/src/components/Projects.jsx`, replace the closing links row of
             href={project.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors"
+            className={cardLinkClass}
           >
             Full match &#8599;
           </a>

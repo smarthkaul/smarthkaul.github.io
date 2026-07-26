@@ -7,9 +7,9 @@ export const PROJECTS = [
     slug: "march-madness",
     title: "NCAA March Madness Prediction Model",
     hero: "0.1250",
-    heroLabel: "Brier score",
+    heroLabel: "Brier · lower is better",
     description:
-      "Predicting NCAA tournament matchups for the Kaggle competition. Opponent-adjusted season statistics, seed differences, and 14-day form, scored on calibration rather than accuracy.",
+      "Predicting NCAA tournament matchups for the Kaggle competition. Opponent-adjusted season statistics, seed differences, and 14-day form, scored by Brier score rather than accuracy.",
     tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn", "GridSearchCV"],
     team: "Three-person course project (STAD68)",
     // Set to the repo or shared notebook URL once it is public. null renders no link.
@@ -20,7 +20,7 @@ export const PROJECTS = [
         {
           heading: "The problem",
           body:
-            "Predict the outcome of every NCAA tournament matchup from historical game data, scored by Brier score rather than accuracy. That scoring choice drives everything downstream: a model that is confidently wrong is punished far harder than one that hedges, so the goal is a calibrated probability rather than a pick. The underlying data is discrete — wins, losses, box-score lines — and it points fairly consistently at possession as the thing that decides games.",
+            "Predict the outcome of every NCAA tournament matchup from historical game data, scored by Brier score rather than accuracy. That scoring choice drives everything downstream: a model that is confidently wrong is punished far harder than one that hedges, so the goal is a calibrated probability rather than a pick. The underlying data is discrete — wins, losses, box-score lines — and the working assumption going in was that possession is what decides games.",
         },
         {
           heading: "Feature engineering",
@@ -43,7 +43,7 @@ export const PROJECTS = [
         {
           heading: "What actually won",
           body:
-            "The ensemble scored 0.1250. Logistic regression alone scored 0.1252 — a gap of 0.0002, which is to say no gap at all. XGBoost, the model with all the capacity, finished last at 0.1269. That ordering is the most useful thing the project produced. With a limited number of tournament games to learn from and features whose effects are largely linear, there is not much non-linear structure left for a boosted tree to find, and the regularized linear model generalizes better precisely because it cannot chase it. Ensembling the two bought essentially nothing over the simpler model, and would not have been worth its complexity in production.",
+            "Brier score is lower-is-better throughout. The ensemble scored 0.1250. Logistic regression alone scored 0.1252 — a gap of 0.0002, which is to say no gap at all. XGBoost, the model with all the capacity, finished last at 0.1269. That ordering is the most useful thing the project produced. With a limited number of tournament games to learn from and features whose effects are largely linear, there is not much non-linear structure left for a boosted tree to find, and the regularized linear model generalizes better precisely because it cannot chase it. Ensembling the two bought essentially nothing over the simpler model, and would not have been worth its complexity in production.",
         },
       ],
       results: [
@@ -93,12 +93,12 @@ export const PROJECTS = [
         {
           heading: "Do the sources move together?",
           body:
-            "Testing this on raw series would mostly measure the shared calendar, so the dependence analysis ran on STL-adjusted data instead. STL removes the deterministic seasonal component without touching short-run dynamics; seasonal differencing would have mechanically transformed the data and could manufacture autocorrelation that has nothing to do with real co-movement. Once seasonality was out, most apparent dependence went with it. Within the US, combustible fuels Granger-cause both nuclear and hydro. Across the border, exactly one directional link survived: Canadian nuclear Granger-causes US nuclear, and not the reverse. Impulse responses confirmed how short-lived these effects are — a Canadian hydro shock depresses US hydro for a few periods before fading, with no lasting change to the mix.",
+            "Testing this on raw series would mostly measure the shared calendar, so the dependence analysis ran on STL-adjusted data instead. STL strips the seasonal component without touching short-run dynamics; seasonal differencing would have mechanically transformed the data and could manufacture autocorrelation that has nothing to do with real co-movement. Once seasonality was out, most apparent dependence went with it. Within the US, combustible fuels Granger-cause both nuclear and hydro. Across the border, exactly one directional link survived: Canadian nuclear Granger-causes US nuclear, and not the reverse. Impulse responses fill in what the significance tests leave out: even where no Granger link registered, a Canadian hydro shock visibly depresses US hydro for a few periods before fading, with no lasting change to the mix.",
         },
         {
           heading: "What it adds up to",
           body:
-            "A negative result, and a useful one. North American electricity supply is driven overwhelmingly by its own strong seasonal cycles, and each source is best forecast by a model of itself. The multivariate machinery earned its keep on exactly one of six series and produced only a handful of significant causal links. Reporting that plainly is more valuable than finding a way to make VAR look necessary — the practical recommendation is source-specific seasonal models, and the cross-border coordination story the data might have told simply is not there.",
+            "A negative result, and a useful one. North American electricity supply is driven overwhelmingly by its own strong seasonal cycles, and each source is best forecast by a model of itself. The multivariate machinery earned its keep on exactly one of six series and produced only a handful of significant Granger-causal links. Reporting that plainly is more valuable than finding a way to make VAR look necessary — the practical recommendation is source-specific seasonal models, and the cross-border coordination story the data might have told simply is not there.",
         },
       ],
       results: [
