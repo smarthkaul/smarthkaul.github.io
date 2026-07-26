@@ -33,6 +33,19 @@ describe('Projects', () => {
     ])
   })
 
+  it('gives every card a code link that opens externally', () => {
+    renderAt('/projects')
+    // All three now publish code: a Colab notebook, a gist, and this repo.
+    // The null case (a card rendering no link at all) is covered against a
+    // stub in ProjectDetail.chart.test.jsx, since no real project hits it.
+    const codeLinks = screen.getAllByRole('link', { name: /view the code/i })
+    expect(codeLinks).toHaveLength(3)
+    for (const link of codeLinks) {
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    }
+  })
+
   it('renders the detail page at /projects/:slug instead of the list', () => {
     renderAt('/projects/this-site')
     expect(

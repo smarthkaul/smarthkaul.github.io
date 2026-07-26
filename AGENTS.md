@@ -55,7 +55,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
         │   ├── CourtStage.jsx     # court-navigation state machine (see Rendering architecture)
         │   └── Pagenotfound.jsx   # 404 route
         ├── components/            # one file per page section, plus two chrome subfolders
-        │   ├── broadcast/         # StatCard, Badge, ChartFrame, StatList — shared broadcast UI kit
+        │   ├── broadcast/         # StatCard, Badge, ChartFrame, StatList, ActionLink — shared broadcast UI kit
         │   └── court/             # Court (SVG), Ball (GSAP aim + flight), Player, ColdOpen, Hud, SectionMenu, OutCall, ServeTutorial — navigation chrome
         ├── data/
         │   ├── sections.js        # SECTIONS / COURT / BOXES / COURT_BOUNDS / resolveActiveSection / flight math (SERVE_ORIGIN, serveControl, servePathD, bezierPoint) / aim & landing (landingFromPull, pointInRect, classifyLanding)
@@ -129,7 +129,9 @@ Navigating from the hub is an aim-and-launch drag, driven by a pointer state mac
 - To animate a block in on scroll, use the `useReveal()` hook: `const [ref, visible] = useReveal();` then apply `ref` and `` className={`reveal ${visible ? "visible" : ""}`} ``. The `.reveal` / `.visible` CSS lives in `index.css`. Stagger multiple items with `style={{ transitionDelay: \`${idx * 80}ms\` }}`.
 
 **External links**
-- Always `target="_blank" rel="noopener noreferrer"` and an `aria-label` on icon-only links.
+- Always `target="_blank" rel="noopener noreferrer"` and an `aria-label` on icon-only links. This includes the Contact `mailto:` CTA, so clicking it hands off to the mail client without navigating the SPA away.
+- Inside the Projects section use `broadcast/ActionLink` rather than a hand-rolled `<a>`/`<Link>`: pass `href` for external (it applies the target/rel pair for you) or `to` for internal. It owns the one link treatment shared by the project cards and the detail pages.
+- A project's code link lives in `codeUrl` — **not** `github`. It holds whatever is public for that project (a repo, a shared Colab notebook); `null` renders no link.
 
 ## Commands
 

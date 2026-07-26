@@ -12,8 +12,7 @@ export const PROJECTS = [
       "Predicting NCAA tournament matchups for the Kaggle competition. Opponent-adjusted season statistics, seed differences, and 14-day form, scored by Brier score rather than accuracy.",
     tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn", "GridSearchCV"],
     team: "Three-person course project (STAD68)",
-    // Set to the repo or shared notebook URL once it is public. null renders no link.
-    github: null,
+    codeUrl: "https://colab.research.google.com/drive/1bP96pdm7lTWnZg8EFO6-8kEsH8NyWInU",
     detail: {
       broadcast: "Match Report",
       sections: [
@@ -66,7 +65,7 @@ export const PROJECTS = [
       "SARIMA and VAR models across six series of Canadian and US electricity supply, asking whether generation sources actually predict one another once seasonality is removed.",
     tech: ["R", "SARIMA", "VAR", "Granger Causality", "STL"],
     team: "Group course project (STAD57)",
-    github: null,
+    codeUrl: "https://gist.github.com/smarthkaul/4a601da41fe99f1062e8fe77242b8594",
     detail: {
       broadcast: "Match Report",
       sections: [
@@ -117,7 +116,7 @@ export const PROJECTS = [
     description:
       "The site you are reading. Navigation is a serve: drag the ball back to aim, release, and where it lands decides where you go. GSAP timelines, a rigged mascot, and a cold open.",
     tech: ["React", "Vite", "GSAP", "Tailwind", "SVG"],
-    github: "https://github.com/smarthkaul/smarthkaul.github.io",
+    codeUrl: "https://github.com/smarthkaul/smarthkaul.github.io",
     detail: {
       broadcast: "Behind the Broadcast",
       sections: [

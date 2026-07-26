@@ -60,7 +60,7 @@ describe('ProjectDetail', () => {
     expect(screen.queryByText(/course project/i)).not.toBeInTheDocument()
   })
 
-  it('links to the code when a github url is present', () => {
+  it('links to the code when a code url is present', () => {
     renderDetail('this-site')
     const link = screen.getByRole('link', { name: /view the code/i })
     expect(link).toHaveAttribute('href', 'https://github.com/smarthkaul/smarthkaul.github.io')
@@ -68,10 +68,8 @@ describe('ProjectDetail', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('omits the code link when github is null', () => {
-    renderDetail('energy-forecasting')
-    expect(screen.queryByRole('link', { name: /view the code/i })).not.toBeInTheDocument()
-  })
+  // The codeUrl-is-null case moved to ProjectDetail.chart.test.jsx: every real
+  // project now publishes code, so it can only be exercised against a stub.
 
   it('always offers a way back to the project list', () => {
     renderDetail('this-site')

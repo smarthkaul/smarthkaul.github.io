@@ -15,7 +15,7 @@ vi.mock('../data/projects', () => ({
           heroLabel: 'metric',
           description: 'stub',
           tech: ['R'],
-          github: null,
+          codeUrl: null,
           detail: {
             broadcast: 'Match Report',
             sections: [
@@ -62,5 +62,17 @@ describe('ProjectDetail chart figure', () => {
       (n) => n.tagName
     )
     expect(order).toEqual(['H3', 'FIGURE', 'H3'])
+  })
+
+  // The stub above sets codeUrl: null. Every real project now publishes code,
+  // so this branch can only be reached against a fixture — but a project with
+  // no code link must still render no link rather than a dead one.
+  it('renders no code link when codeUrl is null', () => {
+    renderCharted()
+    expect(
+      screen.queryByRole('link', { name: /view the code/i })
+    ).not.toBeInTheDocument()
+    // The internal "All projects" link is unaffected.
+    expect(screen.getByRole('link', { name: /all projects/i })).toBeInTheDocument()
   })
 })
