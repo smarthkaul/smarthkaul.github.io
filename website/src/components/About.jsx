@@ -1,6 +1,7 @@
 import { useReveal } from "../hooks/useReveal";
 import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
+import headshotUrl from "../assets/headshot.jpg";
 
 const PROFILE = [
   { k: "Base", v: "Toronto, ON 🇨🇦" },
@@ -18,10 +19,19 @@ const About = () => {
     <section id="about" className="px-6 sm:px-12 lg:px-24 py-16">
       <div ref={ref} className={`max-w-3xl mx-auto reveal ${visible ? "visible" : ""}`}>
         <StatCard broadcast="The Player" title="About">
-          <p className="text-charcoal text-xl sm:text-2xl font-light leading-relaxed mb-6">
-            I&apos;m a Statistics student at the University of Toronto specializing in
-            machine learning and data science.
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-6">
+            <img
+              src={headshotUrl}
+              alt="Smarth Kaul"
+              width="600"
+              height="800"
+              className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover shrink-0 ring-4 ring-ball/70 shadow-md"
+            />
+            <p className="text-charcoal text-xl sm:text-2xl font-light leading-relaxed">
+              I&apos;m a Statistics student at the University of Toronto specializing in
+              machine learning and data science.
+            </p>
+          </div>
           <p className="text-charcoal/70 text-base leading-relaxed mb-8">
             I care about building things that are both technically sound and actually
             useful — whether that&apos;s a forecasting model, a SQL pipeline, or a clean
