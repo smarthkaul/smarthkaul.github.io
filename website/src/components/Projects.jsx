@@ -1,7 +1,12 @@
+import { Link, useParams } from "react-router-dom";
 import { useReveal } from "../hooks/useReveal";
+import { PROJECTS } from "../data/projects";
+import ProjectDetail from "./ProjectDetail";
 import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
-import { PROJECTS } from "../data/projects";
+
+const cardLinkClass =
+  "font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors";
 
 const ProjectCard = ({ project }) => (
   <StatCard broadcast="Highlight Reel" headerRight={<Badge tone="ball">Replay</Badge>}>
@@ -30,22 +35,31 @@ const ProjectCard = ({ project }) => (
           </Badge>
         ))}
       </div>
-      {project.github && (
-        <a
-          href={project.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors shrink-0"
-        >
-          Full match &#8599;
-        </a>
-      )}
+      <div className="flex flex-wrap items-center gap-4 shrink-0">
+        <Link to={`/projects/${project.slug}`} className={cardLinkClass}>
+          Match report &rarr;
+        </Link>
+        {project.github && (
+          <a
+            href={project.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cardLinkClass}
+          >
+            Full match &#8599;
+          </a>
+        )}
+      </div>
     </div>
   </StatCard>
 );
 
 const Projects = () => {
+  // useReveal must run unconditionally — hooks cannot sit after an early return.
   const [ref, visible] = useReveal();
+  const { slug } = useParams();
+
+  if (slug) return <ProjectDetail slug={slug} />;
 
   return (
     <section id="projects" className="px-6 sm:px-12 lg:px-24 py-16">
@@ -55,8 +69,8 @@ const Projects = () => {
           Highlight Reel
         </p>
         <div className="grid grid-cols-1 gap-6">
-          {PROJECTS.map((project, i) => (
-            <ProjectCard key={i} project={project} />
+          {PROJECTS.map((project) => (
+            <ProjectCard key={project.slug} project={project} />
           ))}
         </div>
       </div>
