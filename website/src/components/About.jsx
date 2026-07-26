@@ -1,6 +1,7 @@
 import { useReveal } from "../hooks/useReveal";
 import StatCard from "./broadcast/StatCard";
 import Badge from "./broadcast/Badge";
+import StatList from "./broadcast/StatList";
 import headshotUrl from "../assets/headshot.jpg";
 
 const PROFILE = [
@@ -39,19 +40,7 @@ const About = () => {
             consulting, which gives me range. Outside of work: tennis, guitar, and trying
             to learn something new every week.
           </p>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 border-t border-charcoal/10 pt-6 mb-8">
-            {PROFILE.map(({ k, v }) => (
-              <div
-                key={k}
-                className="flex items-baseline justify-between gap-4 border-b border-charcoal/10 py-2"
-              >
-                <dt className="font-mono text-xs uppercase tracking-widest text-charcoal/50">
-                  {k}
-                </dt>
-                <dd className="text-charcoal font-medium text-right">{v}</dd>
-              </div>
-            ))}
-          </dl>
+          <StatList items={PROFILE} className="mb-8" />
           <div className="flex flex-wrap gap-2">
             {SKILLS.map((s) => (
               <Badge key={s} tone="purple">

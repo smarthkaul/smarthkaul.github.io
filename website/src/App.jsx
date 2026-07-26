@@ -13,6 +13,7 @@ function App() {
           {SECTIONS.map((s) => (
             <Route key={s.id} path={s.id} element={<CourtStage />} />
           ))}
+          <Route path="projects/:slug" element={<CourtStage />} />
           <Route path="*" element={<Pagenotfound />} />
         </Route>
       </Routes>

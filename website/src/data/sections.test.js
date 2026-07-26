@@ -53,6 +53,18 @@ describe('resolveActiveSection', () => {
   it('tolerates trailing slashes', () => {
     expect(resolveActiveSection('/about/')).toBe(SECTIONS[0])
   })
+
+  it('resolves a nested project route to the projects section', () => {
+    const projects = SECTIONS.find((s) => s.id === 'projects')
+    expect(resolveActiveSection('/projects/march-madness')).toBe(projects)
+    expect(resolveActiveSection('/projects/')).toBe(projects)
+    expect(resolveActiveSection('/projects/this-site/')).toBe(projects)
+  })
+
+  it('returns null when the first segment is unknown', () => {
+    expect(resolveActiveSection('/colophon')).toBeNull()
+    expect(resolveActiveSection('/nope/projects')).toBeNull()
+  })
 })
 
 describe('serve trajectory', () => {
