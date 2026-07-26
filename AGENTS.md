@@ -2,7 +2,7 @@
 
 Guidance for AI agents (and humans) working in this repository. Read this before making changes.
 
-> **Tennis-broadcast redesign — Phases 0–2 shipped.** The site has been reskinned to a Wimbledon-broadcast palette, rebuilt around court navigation, and given a GSAP-driven aim-and-launch serve, per [`plan/2026-07-08-tennis-court-redesign-design.md`](plan/2026-07-08-tennis-court-redesign-design.md). The design sections below describe that shipped system. On the hub, you drag the ball back to aim (mirrored, slingshot-style) and set power, then release to launch it along a bézier arc (Hawk-Eye dotted trail, impact ripple); where it lands decides the outcome — landing in a service box navigates into that section, landing in-bounds but outside every box draws an `OUT` call and the ball returns, and a shot that clears the court entirely opens a serve-tutorial modal easter egg. Phases 3–4 (an SVG player mascot the ball would serve from, and a cinematic cold-open intro) are designed but **not built yet** — there is still no player, just a ball originating from a fixed baseline point. Don't describe Phase 3+ features as present, and don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
+> **Tennis-broadcast redesign — Phases 0–4 shipped.** The site has been reskinned to a Wimbledon-broadcast palette, rebuilt around court navigation, given a GSAP-driven aim-and-launch serve, a player mascot who swings the ball, and a cinematic cold-open, per [`plan/2026-07-08-tennis-court-redesign-design.md`](plan/2026-07-08-tennis-court-redesign-design.md). The design sections below describe that shipped system. On the hub, a player stands at the left baseline; you drag the ball back to aim (mirrored, slingshot-style) and set power — the player winds up as you pull — then release to launch it along a bézier arc (Hawk-Eye dotted trail, impact ripple); where it lands decides the outcome — landing in a target navigates into that section (crowd cheer), landing in-bounds but outside every target draws an `OUT` call and the ball returns (crowd groan), and a shot that clears the court entirely opens a serve-tutorial modal easter egg. A first-visit cold-open plays before all of this. Don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
 
 ## What this is
 
@@ -16,7 +16,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
 | Build tool | Vite 6 |
 | Styling | Tailwind CSS 3 (utility-first, no CSS modules) |
 | Routing | React Router DOM 7 |
-| Animation | `framer-motion` (section erupt/dock) + `gsap` / `@gsap/react` (ball serve trajectory) |
+| Animation | `framer-motion` (section erupt/dock) + `gsap` / `@gsap/react` (ball serve trajectory, player swing, cold-open) |
 | Linting | ESLint 9 (flat config) |
 | Hosting | GitHub Pages via GitHub Actions |
 | Fonts | Syne (display) + Inter (body), loaded from Google Fonts |
@@ -29,7 +29,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
 .
 ├── .github/workflows/deploy.yml   # CI/CD → GitHub Pages
 ├── AGENTS.md                      # this file
-├── plan/2026-07-08-tennis-court-redesign-design.md   # redesign spec (Phases 3-4 not built yet)
+├── plan/2026-07-08-tennis-court-redesign-design.md   # redesign spec (all phases now built)
 └── website/
     ├── index.html                 # Vite entry HTML; <title> + meta description
     ├── vite.config.js             # react plugin + Vitest config (jsdom env, src/test/setup.js)
@@ -44,13 +44,18 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
         ├── main.jsx               # React root, StrictMode
         ├── App.jsx                # Router: "/" + one route per section id, all → CourtStage
         ├── index.css              # font import, Tailwind directives, .court-turf, keyframes
+        ├── assets/
+        │   ├── player/            # head/body/left-arm/right-arm .svg — the Mii figure, cut in Figma
+        │   ├── crowd-cheer.mp3    # played on a hit
+        │   ├── crowd-aww.mp3      # played on a miss (out / beyond)
+        │   └── intro-theme.m4a    # cold-open music (trimmed to 15s + faded; keep it small)
         ├── pages/
         │   ├── Layout.jsx         # Navbar + <Outlet/> + Footer shell
         │   ├── CourtStage.jsx     # court-navigation state machine (see Rendering architecture)
         │   └── Pagenotfound.jsx   # 404 route
         ├── components/            # one file per page section, plus two chrome subfolders
         │   ├── broadcast/         # StatCard, Badge, Ticker — shared broadcast UI kit
-        │   └── court/             # Court (SVG), Ball (GSAP aim + flight), Hud, SectionMenu, OutCall, ServeTutorial — navigation chrome
+        │   └── court/             # Court (SVG), Ball (GSAP aim + flight), Player, ColdOpen, Hud, SectionMenu, OutCall, ServeTutorial — navigation chrome
         ├── data/
         │   └── sections.js        # SECTIONS / COURT / BOXES / COURT_BOUNDS / resolveActiveSection / flight math (SERVE_ORIGIN, serveControl, servePathD, bezierPoint) / aim & landing (landingFromPull, pointInRect, classifyLanding)
         ├── hooks/
@@ -65,6 +70,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
 main.jsx
 └── App.jsx  (BrowserRouter)
     └── "/" → Layout.jsx
+              ├── ColdOpen      (full-screen first-visit intro; self-removes, renders nothing afterwards)
               ├── Navbar        (fixed slim bar; "SK" home link at left, social links + SectionMenu at right)
               ├── <Outlet/>
               │   ├── "/", "/about", "/experience", "/projects", "/contact" → CourtStage
@@ -79,14 +85,18 @@ There is no more scrolling stack of sections. `CourtStage.jsx` is a state machin
 
 Navigating from the hub is an aim-and-launch drag, driven by a pointer state machine in `CourtStage.jsx` (`aim` / `shot` / `outCall` / `tutorial` state, plus `onPointerDown` / `onPointerMove` / `onPointerUp` and a `toCourtCoords()` helper that maps pointer pixels to the court's SVG coordinate space). Pointer-down on the court frame starts an `aim`; pointer-move computes a "pull" vector (pointer position minus the fixed baseline point `SERVE_ORIGIN`) and a `power` (pull distance, clamped to `[0,1]`), which the hub's `Ball` (`components/court/Ball.jsx`) renders live as an aim line and a power gauge — mirrored, slingshot-style (pulling down-and-back aims the launch up-court), with **no landing preview**. Pointer-up on a real drag (a bare tap is ignored) computes the landing point via `landingFromPull(SERVE_ORIGIN, pull, opts)` in `src/data/sections.js` and sets `shot`, which `Ball` flies to along a GSAP quadratic-bézier timeline (`serveControl`/`servePathD`/`bezierPoint`, also in `sections.js`) from `SERVE_ORIGIN` to that landing point, drawing a dotted Hawk-Eye trail and an impact ripple, then calling `onLand`. `onLand` (in `CourtStage`) classifies the landing point with `classifyLanding(shot)`: a point inside any target (`pointInRect` against `BOXES[s.box]` — either a far service box, or one of the circular targets **beyond** the far baseline, which sit outside `COURT_BOUNDS` but are checked first) is a **hit** and calls `navigate("/" + sectionId)`, at which point the section erupts as before; a point inside the court's outer boundary (`COURT_BOUNDS`) but on no target is an **out** — `OutCall` flashes an "OUT" banner (middle-left, beside the net) for ~900ms and the ball glides back, no navigation; a point off the court that misses every target is **beyond** and opens the `ServeTutorial` modal, an easter egg with a video placeholder (a real serve clip is a later addition) that closes via its button, Escape, or the backdrop. Each section is still a real, bookmarkable route, not an anchor scroll — the serve is a visual prelude to the same navigation, not a replacement for it. Because zones aren't clickable on the hub, the `SectionMenu` dropdown in the Navbar (plain `Link`s, always active) is the accessible/keyboard/screen-reader/mobile fallback for reaching a section without dragging. `usePrefersReducedMotion()` doesn't disable aiming, but it makes the flight instant — `Ball` skips the bézier tween, jumps straight to the landing point, and calls `onLand` immediately — and it gates the erupt/dock transitions down to instant opacity swaps. The docked `Court` inside the `Hud` is not `disabled` and still navigates on click, instantly, with no aim mechanic — the drag-to-launch flow only exists over the full-size main court. GitHub Pages doesn't natively support this kind of deep link, so `public/404.html` plus the redirect shim in `index.html` round-trip a deep link through the SPA (the [rafgraph technique](https://github.com/rafgraph/spa-github-pages)).
 
-**There is still no player mascot.** That's Phase 3 of the redesign (see the plan doc) — the ball serves from a fixed baseline point (`SERVE_ORIGIN`), not from a player or racket. Don't describe a player as present.
+**The player mascot (Phase 3) is shipped.** `Player` stands at the left baseline beside `SERVE_ORIGIN` and is assembled from four image parts the site owner cut in Figma from a Mii-style character (`src/assets/player/{head,body,left-arm,right-arm}.svg`), positioned by the `PARTS` map in court-viewBox units. His right arm is a separate `<g>` that pivots at `SHOULDER` (via GSAP `svgOrigin`): it winds up proportionally to `aim.power` while you drag, then snaps through a swing when a `shot` fires. The racket is drawn in vectors (frame ellipse + string grid + handle) rather than imported. The whole figure idle-bobs when neither aiming nor mid-flight. **Every placement constant in `Player.jsx` is eyeball-tuned by the site owner** — if a part looks misaligned, adjust those numbers, don't restructure the component. `onLand` also fires crowd audio: a cheer on a hit, a groan on an out/beyond (`src/assets/crowd-*.mp3`, played through `new Audio()` refs in `CourtStage`).
+
+**The cold-open (Phase 4) is shipped.** `ColdOpen` (rendered by `Layout`, above the Navbar) is a full-screen GSAP timeline that plays once per visitor before the site: a name bumper ("Smarth Kaul", ball bouncing three times) → a solo "tale of the tape" player card, held ~4s → the card shrinks away while the court draws itself in (grass fade + `stroke-dashoffset` line-by-line build, on a copy of the real court geometry) → the player enters top-centre and waddle-walks (walk keyframes + a yoyo rotation tilt) down to his baseline position → a fade hands off to the live court. It gates itself in `shouldPlay()`: landing route only, skipped under `prefers-reduced-motion`, and remembered in `localStorage` under `coldOpenSeen`. **Append `?intro` to the URL to force a replay** — that's how you re-watch it while tuning. Once it finishes (or you hit Skip) the component returns `null`, so it costs nothing on later navigations. The intro theme and the timeline are deliberately owned by a **single** `useEffect`, and the timeline is built `paused` and released only once `audio.play()` settles — that keeps the music and the first frame on the same beat, and guarantees exactly one audio element that cannot outlive its animation. Don't split them back into two effects: under `StrictMode`'s double-mount the async `play()` rejection lands after cleanup and orphans an audio element that plays mid-animation and never stops.
 
 ### The sections
 
 - **Court** (`components/court/Court.jsx`) — the SVG tennis court, centred in a widened landscape viewBox: decorative lines/net plus four target `<button>`s positioned from `BOXES` — the two **far service boxes** render as rectangles, the two **beyond-the-baseline** targets as circular archery rings. The same component renders full-size on `/` (targets `disabled` — aim-and-launch, not clickable) and docked (compact, label-less, via the `docked` prop, still clickable) inside the `Hud`. (The landing page is just this court; the old `Hub` name/typewriter/ticker block was removed.)
 - **Ball** (`components/court/Ball.jsx`) — the GSAP-driven aim + flight: glides back to `SERVE_ORIGIN` (from wherever a shot ended) and idle-bobs when neither aiming nor mid-flight; while `CourtStage` has an `aim` (pull vector + power), renders a live aim line and power gauge with no landing preview; once `CourtStage` sets a `shot` (a landing point), flies a bézier arc (ball + dotted trail + impact ripple) to it and calls `onLand`. Only mounted over the full-size main court, not the docked `Hud` court.
+- **Player** (`components/court/Player.jsx`) — the mascot at the left baseline, assembled from the Figma-cut image parts in `src/assets/player/`; winds up with `aim.power`, swings on `shot`, idle-bobs otherwise. Same `{ aim, shot }` props as `Ball`, mounted alongside it over the full-size court only. Its `PARTS`/`SHOULDER`/`REST` constants are hand-tuned — tweak the numbers, don't rebuild the component.
 - **OutCall** (`components/court/OutCall.jsx`) — a brief "OUT" banner shown middle-left over the court (beside the net) when a launch lands in-bounds but on no target; `CourtStage` shows it for ~900ms, then the ball glides back to the baseline with no navigation.
 - **ServeTutorial** (`components/court/ServeTutorial.jsx`) — a modal easter egg opened when a launch clears the court entirely; `role="dialog"`, closable via its button, Escape, or the backdrop, currently holding a video placeholder (a real serve clip is a later addition).
+- **ColdOpen** (`components/court/ColdOpen.jsx`) — the once-per-visitor intro timeline described above (bumper → player card → court build → waddle walk-in → hand-off), with a Skip button. Replay it with `?intro`. It holds its own copy of the court geometry and player parts so the intro can animate them freely without touching `Court`/`Player`; **if you change the court's line coordinates in `Court.jsx`, mirror them here** or the build-in will no longer match the live court.
 - **Hud** (`components/court/Hud.jsx`) — fixed corner panel shown once a section is active; wraps the docked `Court` (instant click-to-navigate, no aim mechanic) and the active section's label.
 - **SectionMenu** (`components/court/SectionMenu.jsx`) — accessible dropdown in the Navbar; lists `/` plus every entry in `SECTIONS` as plain links. This is the keyboard/screen-reader/mobile fallback for navigation, since the hub's court zones aren't clickable — only draggable.
 - **About** — `StatCard` ("The Player"): bio prose, a stat `<dl>`, and skill `Badge`s.
@@ -143,7 +153,7 @@ npm run test:watch # Vitest in watch mode
 
 ## Design consistency
 
-The site runs on the tennis-broadcast system shipped in Phases 0–2 (palette + court navigation + ball serve, see the banner above). Keep it that way:
+The site runs on the tennis-broadcast system shipped in Phases 0–4 (palette + court navigation + ball serve + player + cold-open, see the banner above). Keep it that way:
 
 - **Accent color is `ball`** (neon yellow) — highlights, active/hover states, and CTAs only, never body text on `cream` panels. Chrome (Navbar, Footer, Hud, `StatCard` headers, `Ticker`) is `wimbledon` purple; content panels are `cream` with `charcoal` text; the page background is `grass`/`.court-turf`. Do not reintroduce `violet`, `indigo`, or `slate-950` — that was the pre-redesign palette.
 - **Headings use `font-display`** (Syne). This applies to route-level chrome too, not just section content (see `Pagenotfound.jsx`).
@@ -156,4 +166,4 @@ The site runs on the tennis-broadcast system shipped in Phases 0–2 (palette + 
 - When adding content (a job, project, link), edit the relevant data array — don't restructure the component. When adding, removing, or renaming a section, edit `SECTIONS`/`BOXES` in `src/data/sections.js` — don't hand-edit routes or nav links in multiple files.
 - Match the shipped Tailwind palette and typography rather than introducing new colors/fonts, and don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
 - Run `npm run lint`, `npm run test`, and `npm run build` from `website/` before finishing; a broken build blocks deploys.
-- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, the route resolver, `usePrefersReducedMotion` — plus a smoke test; it does not cover layout or interaction. Verify those visually with `npm run dev` when changing things like the accordion, the aim-and-launch ball serve, the court targets, erupt/dock transitions, or the `SectionMenu`.
+- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, the route resolver, `usePrefersReducedMotion` — plus a smoke test; it does not cover layout or interaction. Verify those visually with `npm run dev` when changing things like the accordion, the aim-and-launch ball serve, the court targets, the player's wind-up/swing, erupt/dock transitions, or the `SectionMenu`. The cold-open only plays once per browser — re-watch it at `http://localhost:5173/?intro`.
