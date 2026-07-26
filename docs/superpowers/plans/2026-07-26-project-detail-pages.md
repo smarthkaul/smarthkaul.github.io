@@ -107,7 +107,8 @@ git commit -m "Resolve nested routes to their parent section"
 - Produces:
   - `PROJECTS: Project[]` — array order is display order.
   - `getProject(slug: string) => Project | null`
-  - `Project` = `{ slug, title, hero, heroLabel, description, tech: string[], github: string|null, detail }`
+  - `Project` = `{ slug, title, hero, heroLabel, description, tech: string[], team?: string, github: string|null, detail }`
+  - `team` is present only on collaborative projects. Both course projects have co-authors and must say so; `this-site` omits the field.
   - `detail` = `{ broadcast: string, sections: Section[], results?: {k,v}[], resultsNote?: string, chart?: Chart }`
   - `Section` = `{ heading: string, body?: string, items?: string[] }` — exactly one of `body` or `items`.
   - `Chart` = `{ src, alt, caption, width, height }`
@@ -177,6 +178,13 @@ describe('PROJECTS', () => {
       expect(p.github === null || typeof p.github === 'string').toBe(true)
     }
   })
+
+  it('credits the team on the collaborative projects', () => {
+    // Both course projects have co-authors; the site is solo.
+    expect(getProject('march-madness').team).toEqual(expect.any(String))
+    expect(getProject('energy-forecasting').team).toEqual(expect.any(String))
+    expect(getProject('this-site').team).toBeUndefined()
+  })
 })
 
 describe('getProject', () => {
@@ -212,12 +220,13 @@ export const PROJECTS = [
   {
     slug: "march-madness",
     title: "NCAA March Madness Prediction Model",
-    hero: "0.1230",
+    hero: "0.1250",
     heroLabel: "Brier score",
     description:
-      "Ensemble ML model predicting tournament outcomes. Engineered features including seed differences, 14-day win rates, and adjusted season stats.",
-    tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn"],
-    // Set to the repo URL once it is public. null renders no link.
+      "Predicting NCAA tournament matchups for the Kaggle competition. Opponent-adjusted season statistics, seed differences, and 14-day form, scored on calibration rather than accuracy.",
+    tech: ["Python", "XGBoost", "Logistic Regression", "Scikit-learn", "GridSearchCV"],
+    team: "Three-person course project (STAD68)",
+    // Set to the repo or shared notebook URL once it is public. null renders no link.
     github: null,
     detail: {
       broadcast: "Match Report",
@@ -225,34 +234,52 @@ export const PROJECTS = [
         {
           heading: "The problem",
           body:
-            "Single-elimination tournaments are hostile to prediction. Seed explains less than it looks like it should, most of the interesting information lives in the upsets, and the tournament only produces 63 games a year to learn from. The goal was a calibrated win probability for every matchup — not just a pick, but a number you could bet against.",
+            "Predict the outcome of every NCAA tournament matchup from historical game data, scored by Brier score rather than accuracy. That scoring choice drives everything downstream: a model that is confidently wrong is punished far harder than one that hedges, so the goal is a calibrated probability rather than a pick. The underlying data is discrete — wins, losses, box-score lines — and it points fairly consistently at possession as the thing that decides games.",
         },
         {
-          heading: "Approach",
+          heading: "Feature engineering",
           items: [
-            "Engineered matchup features rather than team features: seed difference, 14-day rolling win rate, and season statistics adjusted for opponent strength.",
-            "Trained gradient-boosted trees (XGBoost) alongside a logistic regression — the linear model as a hedge, since it degrades more gracefully on the sparse upset cases where the trees have little to learn from.",
-            "Ensembled the two and scored with Brier rather than accuracy. A bracket model that is confidently wrong is worse than one that hedges, and accuracy cannot see that difference.",
+            "Season statistics per team: average points, rebounds, assists, and shooting efficiency.",
+            "The same statistics computed for every opponent each team faced, so strength of schedule is priced in rather than assumed away.",
+            "Seed difference between the two teams, as a proxy for relative ranking and tournament expectation.",
+            "A 14-day win rate, to capture form going into the tournament rather than the season average alone.",
           ],
+        },
+        {
+          heading: "Selection and tuning",
+          items: [
+            "For XGBoost, features were ranked by importance and cut at the median.",
+            "For logistic regression, an L1 (lasso) penalty did the selection, which doubles as overfitting control.",
+            "Both models were tuned with grid search under cross-validation — the regularization strength C for the logit, and n_estimators, max_depth, subsample, and colsample_bytree for XGBoost.",
+            "The optimization target throughout was Brier score, not accuracy. Seed difference, seed placement, and per-game point difference came out as the strongest signals.",
+          ],
+        },
+        {
+          heading: "What actually won",
+          body:
+            "The ensemble scored 0.1250. Logistic regression alone scored 0.1252 — a gap of 0.0002, which is to say no gap at all. XGBoost, the model with all the capacity, finished last at 0.1269. That ordering is the most useful thing the project produced. With a limited number of tournament games to learn from and features whose effects are largely linear, there is not much non-linear structure left for a boosted tree to find, and the regularized linear model generalizes better precisely because it cannot chase it. Ensembling the two bought essentially nothing over the simpler model, and would not have been worth its complexity in production.",
         },
       ],
       results: [
-        { k: "Brier score", v: "0.1230" },
-        { k: "Benchmark", v: "0.1041" },
+        { k: "Ensemble", v: "0.1250" },
+        { k: "Logistic regression", v: "0.1252" },
+        { k: "XGBoost", v: "0.1269" },
+        { k: "Top Kaggle score", v: "0.09588" },
       ],
       resultsNote:
-        "Lower is better here, so the benchmark edged this model by 0.019 — the ensemble did not beat the reference.",
+        "Brier score is lower-is-better, so the leaderboard's 0.09588 is the number to beat and none of these reach it. The gap to the top of a public Kaggle leaderboard is a fair thing to lose; the ordering underneath it is the part worth explaining.",
       // No chart yet. Add { src, alt, caption, width, height } once exported.
     },
   },
   {
     slug: "energy-forecasting",
-    title: "Energy Forecasting Model",
-    hero: "13+ yrs",
-    heroLabel: "data modeled",
+    title: "Forecasting North American Electricity Supply",
+    hero: "13 yrs",
+    heroLabel: "of monthly data",
     description:
-      "SARIMA and VAR time series models on 13+ years of Canadian and US electricity data, quantifying cross-source dependencies.",
-    tech: ["R", "SARIMA", "VAR", "Time Series"],
+      "SARIMA and VAR models across six series of Canadian and US electricity supply, asking whether generation sources actually predict one another once seasonality is removed.",
+    tech: ["R", "SARIMA", "VAR", "Granger Causality", "STL"],
+    team: "Group course project (STAD57)",
     github: null,
     detail: {
       broadcast: "Match Report",
@@ -260,20 +287,39 @@ export const PROJECTS = [
         {
           heading: "The problem",
           body:
-            "Canadian and US electricity demand move together, but “together” is doing a lot of work in that sentence. Both markets share a climate and a calendar, so correlation is guaranteed and uninformative. The real question was whether either series carries information about the other beyond what seasonality already explains — and across 13+ years, seasonality explains a great deal.",
+            "Canada and the United States share a climate, a calendar, and a border, but not an energy mix — Canada leans heavily on hydro while US supply is dominated by combustible fuels. That makes them a useful pair to compare. The project asked three things: what trends and seasonal patterns exist in monthly supply by source, whether those series can be forecast two to three years out, and whether any source or country actually helps predict another.",
         },
         {
-          heading: "Approach",
-          items: [
-            "Established stationarity first: seasonal differencing on both series, with augmented Dickey-Fuller testing to confirm the differenced series were actually usable.",
-            "Fit SARIMA models per series to capture the seasonal structure each market carries on its own.",
-            "Fit a VAR across both series to model them jointly, then ran Granger causality tests — asking whether one series improves forecasts of the other once that series' own history is already accounted for.",
-          ],
+          heading: "The data",
+          body:
+            "Monthly net electricity supply in GWh from the International Energy Agency, accessed through Borealis, covering January 2010 to April 2023. Two countries by three sources — combustible fuels, hydro, and nuclear — gives six series. All six proved variance-stationary except Canadian nuclear, and no outliers needed removing.",
+        },
+        {
+          heading: "Making it stationary",
+          body:
+            "Every series showed strong annual seasonality: ACF correlations decaying slowly with clear spikes at lags 12, 24, and 36, and a PACF cut-off at lag 12 consistent with a seasonal AR(1). That supports seasonal differencing at S=12, D=1. Canadian nuclear was the stubborn one — a log transform did not resolve its non-stationarity and an augmented Dickey-Fuller test could not reject a unit root, so it needed regular differencing on top. Rather than difference by hand, auto.arima selected both differencing orders under AIC, which avoids the over- and under-differencing that manual choices invite.",
+        },
+        {
+          heading: "SARIMA versus VAR",
+          body:
+            "The final twelve months, May 2022 through April 2023, were held out for validation. SARIMA won on both RMSE and MAE for nearly every series; the single exception was US combustible fuels, where VAR edged it, and that series alone kept a VAR as its final model. Residual diagnostics flagged leftover autocorrelation on three series. Adding a seasonal MA term fixed Canadian nuclear and US hydro and lowered their AIC; on Canadian hydro it made things worse, so that model was left as it was rather than tuned into looking better.",
+        },
+        {
+          heading: "Do the sources move together?",
+          body:
+            "Testing this on raw series would mostly measure the shared calendar, so the dependence analysis ran on STL-adjusted data instead. STL removes the deterministic seasonal component without touching short-run dynamics; seasonal differencing would have mechanically transformed the data and could manufacture autocorrelation that has nothing to do with real co-movement. Once seasonality was out, most apparent dependence went with it. Within the US, combustible fuels Granger-cause both nuclear and hydro. Across the border, exactly one directional link survived: Canadian nuclear Granger-causes US nuclear, and not the reverse. Impulse responses confirmed how short-lived these effects are — a Canadian hydro shock depresses US hydro for a few periods before fading, with no lasting change to the mix.",
+        },
+        {
+          heading: "What it adds up to",
+          body:
+            "A negative result, and a useful one. North American electricity supply is driven overwhelmingly by its own strong seasonal cycles, and each source is best forecast by a model of itself. The multivariate machinery earned its keep on exactly one of six series and produced only a handful of significant causal links. Reporting that plainly is more valuable than finding a way to make VAR look necessary — the practical recommendation is source-specific seasonal models, and the cross-border coordination story the data might have told simply is not there.",
         },
       ],
       results: [
-        { k: "Series length", v: "13+ years" },
-        { k: "Models", v: "SARIMA · VAR" },
+        { k: "Coverage", v: "Jan 2010 – Apr 2023" },
+        { k: "Series", v: "6 (2 countries × 3 sources)" },
+        { k: "Validation", v: "12-month holdout" },
+        { k: "Best model", v: "SARIMA, 5 of 6 series" },
       ],
     },
   },
@@ -562,12 +608,23 @@ describe('ProjectDetail', () => {
 
   it('renders the results stat line and its note', () => {
     renderDetail('march-madness')
-    expect(screen.getByText('Brier score')).toBeInTheDocument()
-    expect(screen.getByText('Benchmark')).toBeInTheDocument()
-    expect(screen.getByText('0.1041')).toBeInTheDocument()
-    // "0.1230" is both the hero badge and a results value, so it appears twice.
-    expect(screen.getAllByText('0.1230')).toHaveLength(2)
-    expect(screen.getByText(/the benchmark edged this model/)).toBeInTheDocument()
+    expect(screen.getByText('Logistic regression')).toBeInTheDocument()
+    expect(screen.getByText('0.1252')).toBeInTheDocument()
+    expect(screen.getByText('Top Kaggle score')).toBeInTheDocument()
+    expect(screen.getByText('0.09588')).toBeInTheDocument()
+    // "0.1250" is both the hero badge and a results value, so it appears twice.
+    expect(screen.getAllByText('0.1250')).toHaveLength(2)
+    expect(screen.getByText(/lower-is-better/)).toBeInTheDocument()
+  })
+
+  it('credits the team when the project has co-authors', () => {
+    renderDetail('march-madness')
+    expect(screen.getByText(/Three-person course project/)).toBeInTheDocument()
+  })
+
+  it('shows no team credit on a solo project', () => {
+    renderDetail('this-site')
+    expect(screen.queryByText(/course project/i)).not.toBeInTheDocument()
   })
 
   it('links to the code when a github url is present', () => {
@@ -664,6 +721,13 @@ const ProjectDetail = ({ slug }) => {
           title={project.title}
           headerRight={<Badge tone="ball">{project.hero}</Badge>}
         >
+          {/* Collaborative projects say so up front, before any claim is made. */}
+          {project.team && (
+            <p className="font-mono text-xs uppercase tracking-widest text-charcoal/50 border-b border-charcoal/10 pb-4 mb-6">
+              {project.team}
+            </p>
+          )}
+
           {detail.sections.map((section, i) => (
             <Fragment key={section.heading}>
               <DetailSection section={section} />
@@ -989,7 +1053,15 @@ Then open a PR against `main`. Do not push to `main` directly.
 These are recorded so they do not get lost. None block shipping.
 
 1. **Chart screenshots** for March Madness and energy forecasting. Add `chart: { src, alt, caption, width, height }` to the relevant `detail` block and import the asset at the top of `data/projects.js`. Budget: ≤150 KB and ≤1600px wide each — the player assets were just cut 83% and two careless PNGs would hand most of it back.
-2. **GitHub URLs** for both ML repos once published: change `github: null` to the URL.
-3. **Energy forecasting result figures** — Granger causality p-values and any forecast error metric, added to `detail.results`.
-4. **The Brier benchmark framing.** `resultsNote` currently states only what the numbers prove: the benchmark won by 0.019. Naming the benchmark (Kenpom? the Vegas line? a seed-only baseline?) would make it a far stronger paragraph — losing narrowly to a market is a good result, losing to seed-only is not, and right now the page cannot say which.
-5. **`ServeTutorial`'s video placeholder** is still a placeholder. Out of scope here, but it should not become permanent by default.
+   Good candidates already exist in the source documents: the energy report's Graph 8 (two-year forecasts with prediction bands) and Graphs 9–13 (impulse responses), and the March Madness deck's feature-importance slide.
+2. **Code links for the two course projects.** Both are `github: null`.
+   - March Madness lives in a Colab notebook. Its share setting could not be verified during planning — Colab returns HTTP 200 and a generic shell page to everyone and resolves access client-side. Open it in a private window: if it loads, it is link-shareable and the URL can go straight into `github`.
+   - The energy project is a local `.Rmd`. A gist or a small repo would make it linkable.
+3. **Exact RMSE/MAE figures and Granger p-values** for the energy project. The report states which model won each series, and the plan's `results` block quotes structure (coverage, series count, holdout, winner) rather than error metrics. The numbers live in the report's Tables 1–2 and could be added.
+4. **`ServeTutorial`'s video placeholder** is still a placeholder. Out of scope here, but it should not become permanent by default.
+
+### Resolved during planning
+
+- **The March Madness statistics on the live site were wrong.** It claims a Brier score of 0.1230 against a 0.1041 benchmark. The presentation reports 0.1250 (ensemble), 0.1252 (logistic regression), 0.1269 (XGBoost), and 0.09588 for the top Kaggle leaderboard score — neither published figure appears in the source. The plan uses the deck's numbers throughout.
+- **The energy project was described as demand data.** It is net electricity *supply* by generation source (combustible fuels, hydro, nuclear) across two countries, from the IEA via Borealis, Jan 2010 – Apr 2023.
+- **Both course projects have co-authors** and now carry a `team` credit.

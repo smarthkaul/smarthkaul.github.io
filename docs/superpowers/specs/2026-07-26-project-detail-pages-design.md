@@ -192,30 +192,53 @@ inline SVG later is a change to the data, not to `ProjectDetail`.
 
 ## Content
 
+Content for both course projects is drawn from primary sources supplied by Smarth: the
+STAD68 presentation deck and the STAD57 final report plus its R Markdown appendix. The
+live site's existing copy was found to misstate both projects and is superseded.
+
 ### March Madness (`march-madness`)
 
-Existing description becomes the list blurb. The detail page expands it:
+- **Problem** — predict every NCAA tournament matchup for the Kaggle competition, scored
+  on Brier rather than accuracy, so the deliverable is a calibrated probability.
+- **Feature engineering** — season statistics, the same statistics for every opponent
+  faced (strength of schedule), seed difference, 14-day win rate.
+- **Selection and tuning** — XGBoost importance cut at the median; L1 lasso for the logit;
+  grid search with cross-validation on both.
+- **Results** — ensemble 0.1250, logistic regression 0.1252, XGBoost 0.1269, top Kaggle
+  leaderboard 0.09588.
 
-- **Problem** — predicting single-elimination tournament outcomes where seed alone is a
-  weak signal and upsets carry most of the information.
-- **Approach** — feature engineering (seed differences, 14-day rolling win rates, adjusted
-  season stats), then an ensemble of XGBoost and logistic regression.
-- **Results** — Brier score 0.1230 against a 0.1041 benchmark.
-- **Chart** — calibration curve or Brier comparison. *Supplied by Smarth.*
+**The site's published statistics were wrong.** It claims 0.1230 against a 0.1041
+benchmark; neither number appears in the deck. Corrected to the deck's figures.
 
-Note the benchmark is **better** than the model's score (lower Brier is better). The
-current copy states both numbers without addressing this. The writeup should say plainly
-what the benchmark was and what beating it would have required — an honest read is more
-persuasive to a technical interviewer than an ambiguous one.
+The writeup's centre of gravity is the model ordering, not the headline score: the
+regularized linear model beat the gradient-boosted trees, and ensembling bought 0.0002
+over logistic regression alone. That is a real result about capacity versus signal, and a
+better thing to be asked about than a Brier score in isolation.
 
 ### Energy forecasting (`energy-forecasting`)
 
-- **Problem** — quantifying cross-border dependency between Canadian and US electricity
-  demand over 13+ years.
-- **Approach** — SARIMA and VAR models; seasonal differencing, stationarity testing,
-  Granger causality analysis.
-- **Results** — cross-source dependency findings. *Specific figures supplied by Smarth.*
-- **Chart** — forecast with confidence bands. *Supplied by Smarth.*
+- **Problem** — trends and seasonality in monthly electricity supply by source, two-to-three
+  year forecasts, and whether any source or country predicts another.
+- **Data** — IEA monthly net electricity supply (GWh) via Borealis, Jan 2010 – Apr 2023;
+  six series (Canada and US × combustible fuels, hydro, nuclear).
+- **Method** — seasonal differencing at S=12 D=1, with Canadian nuclear needing regular
+  differencing too after ADF could not reject a unit root; `auto.arima` under AIC; a
+  12-month holdout; STL adjustment before the dependence analysis.
+- **Results** — SARIMA beat VAR on RMSE and MAE for five of six series (US combustible
+  fuels the exception). After STL adjustment, most dependence disappeared; the one
+  cross-border directional link is Canadian nuclear Granger-causing US nuclear.
+
+**The site described this as demand data.** It is supply by generation source. Corrected.
+
+The finding is negative and the writeup says so: the multivariate machinery earned its keep
+on one series out of six. Reporting that plainly is the more credible move.
+
+### Attribution
+
+Both course projects have co-authors — the deck credits three people and the R Markdown is
+authored by "Group 3". Each carries a `team` string rendered above the writeup body.
+Smarth's preference is a generic credit rather than a per-person contribution breakdown.
+`this-site` is solo and omits the field.
 
 ### This site (`this-site`)
 
@@ -298,10 +321,12 @@ animation from the projects box, the docked `Hud`, and chart rendering at mobile
 
 ## Open items for Smarth
 
-1. Chart screenshots for March Madness and energy forecasting
-2. GitHub URLs for both ML repos once published
-3. Specific result figures for the energy forecasting model
-4. Confirmation of how to frame the Brier score against its benchmark
+1. Chart screenshots for March Madness and energy forecasting. Candidates already exist in
+   the sources: the report's Graph 8 (forecasts with prediction bands) and Graphs 9–13
+   (impulse responses), and the deck's feature-importance slide.
+2. Code links. The March Madness Colab's share setting could not be verified during
+   planning — open it in a private window to check. The energy `.Rmd` would need a gist.
+3. Exact RMSE/MAE figures and Granger p-values from the report's Tables 1–2.
 
 None of these block implementation. All three pages render without them, with the missing
 pieces marked clearly in `data/projects.js`.
