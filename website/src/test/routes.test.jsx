@@ -2,6 +2,24 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from '../App'
 
+// The Reviews page talks to Firebase. Stub the API layer so the route test
+// renders real components without touching the network.
+vi.mock('../lib/reviewsApi', () => ({
+  listReviews: vi.fn().mockResolvedValue([
+    { id: 'r1', title: 'Challengers', category: 'movies', rating: 3.5, body: 'Great score.', createdAt: new Date('2026-09-28') },
+  ]),
+  getReview: vi.fn(),
+  createReview: vi.fn(),
+  updateReview: vi.fn(),
+  deleteReview: vi.fn(),
+  watchUser: vi.fn((callback) => {
+    callback(null)
+    return () => {}
+  }),
+  signInOwner: vi.fn(),
+  signOutOwner: vi.fn(),
+}))
+
 // jsdom does not implement window.matchMedia. usePrefersReducedMotion (used by
 // CourtStage and Hud) calls it unconditionally in an effect, and framer-motion
 // independently probes it (via the legacy addListener/removeListener API) the
@@ -58,5 +76,13 @@ describe('App route table (the real routes, not a local test harness)', () => {
       screen.getByRole('heading', { name: /March Madness/i })
     ).toBeInTheDocument()
     expect(screen.queryByText(/page not found/i)).not.toBeInTheDocument()
+  })
+
+  it('lists reviews at /reviews', async () => {
+    renderAppAt('/reviews')
+    expect(await screen.findByRole('link', { name: 'Challengers' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: '3.5 out of 4 stars' })).toBeInTheDocument()
+    // Signed out, so no owner controls.
+    expect(screen.queryByRole('link', { name: /write a review/i })).not.toBeInTheDocument()
   })
 })

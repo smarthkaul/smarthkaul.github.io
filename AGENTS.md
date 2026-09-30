@@ -6,7 +6,7 @@ Guidance for AI agents (and humans) working in this repository. Read this before
 
 ## What this is
 
-A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.github.io`. It's a React SPA built with Vite and styled with Tailwind CSS. There is no backend, database, or CMS — all content is hard-coded in the components as JavaScript data arrays.
+A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.github.io`. It's a React SPA built with Vite and styled with Tailwind CSS. There is no backend of our own — portfolio content is hard-coded in the components as JavaScript data arrays. The one exception is the **Reviews** page, whose reviews live in Firebase (see [Reviews](#reviews-firebase) below).
 
 ## Stack
 
@@ -19,6 +19,7 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
 | Animation | `framer-motion` (section erupt/dock) + `gsap` / `@gsap/react` (ball serve trajectory, player swing, cold-open) |
 | Linting | ESLint 9 (flat config) |
 | Hosting | GitHub Pages via GitHub Actions |
+| Reviews data | Firebase — Google sign-in + Firestore (`firebase/firestore/lite`), loaded only on `/reviews` |
 | Fonts | Syne (display) + Inter (body), loaded from Google Fonts |
 
 ## Repository layout
@@ -59,7 +60,11 @@ A single-page personal portfolio for **Smarth Kaul**, deployed at `smarthkaul.gi
         │   └── court/             # Court (SVG), Ball (GSAP aim + flight), Player, ColdOpen, Hud, SectionMenu, OutCall, ServeTutorial — navigation chrome
         ├── data/
         │   ├── sections.js        # SECTIONS / COURT / BOXES / COURT_BOUNDS / resolveActiveSection / flight math (SERVE_ORIGIN, serveControl, servePathD, bezierPoint) / aim & landing (landingFromPull, pointInRect, classifyLanding)
-        │   └── projects.js        # PROJECTS / getProject — source for both the Projects list cards and the detail pages
+        │   ├── projects.js        # PROJECTS / getProject — source for both the Projects list cards and the detail pages
+        │   └── reviews.js         # CATEGORIES / rating scale / validateReview — pure, no Firebase
+        ├── lib/
+        │   ├── firebaseConfig.js  # Firebase web config + OWNER_UID (public by design; firestore.rules does the protecting)
+        │   └── reviewsApi.js      # Firestore + Auth calls for the Reviews page
         ├── hooks/
         │   ├── useReveal.js               # IntersectionObserver scroll-reveal hook
         │   └── usePrefersReducedMotion.js # reduced-motion gate for all animation
@@ -106,6 +111,18 @@ Navigating from the hub is an aim-and-launch drag, driven by a pointer state mac
 - **Projects** — one `StatCard` per project ("Highlight Reel"); data in the `PROJECTS` array; optional GitHub link. Each project also has a detail page at `/projects/:slug`, rendered by `components/ProjectDetail.jsx`, which `Projects.jsx` delegates to when `useParams()` yields a slug.
 - **Contact** — `StatCard` ("Match Point"): blurb + `mailto:` CTA.
 - **Navbar / Footer** — chrome rendered by `Layout`, shared across routes.
+- **Reviews** (`pages/Reviews.jsx` + `components/reviews/`) — not a court section; see below.
+
+## Reviews (Firebase)
+
+A Letterboxd-style page at `/reviews` where the site owner writes reviews **on the live site** — no git involved. It is *not* a court section: it has no target on the court, isn't in `SECTIONS`, and renders outside `CourtStage` as a plain page in `Layout`. `SectionMenu` lists it by hand under the section links.
+
+- **Routes** (hand-registered in `App.jsx`, all → the lazy-loaded `pages/Reviews.jsx` with a `mode` prop): `/reviews` (list, `?category=` filter), `/reviews/new`, `/reviews/:id`, `/reviews/:id/edit`. `Reviews` is `React.lazy` so the Firebase SDK never lands in the main bundle — keep it that way.
+- **A review** is `{ title, category, rating, body, createdAt, updatedAt }`. Five fixed categories (`CATEGORIES` in `src/data/reviews.js`), ratings 0.5–4 in half stars. `firestore.rules` enforces the same limits server-side — **change both together**.
+- **Who can write:** anyone can read. Only the Google account whose uid is `OWNER_UID` sees Write/Edit/Delete, and `firestore.rules` rejects writes from anyone else. The UI check is only cosmetic; the rules are the real lock. Sign-in is a quiet link at the bottom of the list.
+- **Not configured yet?** While `FIREBASE_CONFIG` in `src/lib/firebaseConfig.js` is empty, `/reviews` shows a "coming soon" card and never touches Firebase. `src/test/routes.test.jsx` mocks `reviewsApi`, so tests never hit the real project.
+- **One-time setup:** create a Firebase project → add a Web app and paste its config into `firebaseConfig.js` → Authentication: enable Google, add `smarthkaul.github.io` to authorised domains → Firestore: create the database in **production mode** (test mode lets anyone write for 30 days) → deploy, sign in on `/reviews`, copy the uid it shows into `OWNER_UID` and into `firestore.rules` → paste `firestore.rules` into Firestore → Rules and publish.
+- Review text is rendered as plain text (`whitespace-pre-line`), never as HTML.
 
 ## Conventions — follow these when editing
 
@@ -205,7 +222,7 @@ The site runs on the tennis-broadcast system shipped in Phases 0–4 (palette + 
 ## Guardrails for agents
 
 - Keep changes scoped to `website/` (plus `plan/` only if you're updating the design spec itself). There is no app source outside `website/`.
-- When adding content (a job, project, link), edit the relevant data array — don't restructure the component. When adding, removing, or renaming a top-level section, edit `SECTIONS`/`BOXES` in `src/data/sections.js` — don't hand-edit those routes or nav links in multiple files. The one nested route, `projects/:slug` in `App.jsx`, is registered by hand beside the `SECTIONS.map(...)` and is meant to stay that way — don't delete it while "cleaning up" routing.
+- When adding content (a job, project, link), edit the relevant data array — don't restructure the component. When adding, removing, or renaming a top-level section, edit `SECTIONS`/`BOXES` in `src/data/sections.js` — don't hand-edit those routes or nav links in multiple files. The one nested route, `projects/:slug` in `App.jsx`, is registered by hand beside the `SECTIONS.map(...)` and is meant to stay that way — don't delete it while "cleaning up" routing. The same goes for the four `reviews` routes.
 - Match the shipped Tailwind palette and typography rather than introducing new colors/fonts, and don't "correct" broadcast-themed work back toward the old violet/slate-950 system.
 - Run `npm run lint`, `npm run test`, and `npm run build` from `website/` before finishing; a broken build blocks deploys.
-- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, `src/data/projects.js`, the route resolver, `usePrefersReducedMotion` — plus component-render tests (`ProjectDetail`, `Projects`, `ChartFrame`, `StatList`) and `src/test/routes.test.jsx`, which renders the real `App` against the real route table; it does not cover visual layout. Verify layout and interaction visually with `npm run dev` when changing things like the accordion, the aim-and-launch ball serve, the court targets, the player's wind-up/swing, erupt/dock transitions, or the `SectionMenu`. The cold-open only plays once per browser — re-watch it at `http://localhost:5173/?intro`. `src/test/setup.js` registers `afterEach(cleanup)` — required because `vite.config.js` deliberately omits `globals: true`, so Testing Library cannot self-register it — plus an `IntersectionObserver` stub that `useReveal` needs; don't remove either.
+- `npm run test` (Vitest) covers logic units — `src/data/sections.js`, `src/data/projects.js`, the route resolver, `usePrefersReducedMotion` — plus component-render tests (`ProjectDetail`, `Projects`, `ChartFrame`, `StatList`, the review `StarInput`/`StarRating`/`ReviewForm`) and `src/data/reviews.js` and `src/test/routes.test.jsx`, which renders the real `App` against the real route table; it does not cover visual layout. Verify layout and interaction visually with `npm run dev` when changing things like the accordion, the aim-and-launch ball serve, the court targets, the player's wind-up/swing, erupt/dock transitions, or the `SectionMenu`. The cold-open only plays once per browser — re-watch it at `http://localhost:5173/?intro`. `src/test/setup.js` registers `afterEach(cleanup)` — required because `vite.config.js` deliberately omits `globals: true`, so Testing Library cannot self-register it — plus an `IntersectionObserver` stub that `useReveal` needs; don't remove either.
