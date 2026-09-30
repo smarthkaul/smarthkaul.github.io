@@ -33,6 +33,16 @@ const SectionMenu = () => {
               </Link>
             </li>
           ))}
+          {/* Not a court section (no target to serve into), so it's listed by hand. */}
+          <li className="border-t border-wimbledon-dark mt-2 pt-2">
+            <Link
+              to="/reviews"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-cream hover:text-ball text-sm"
+            >
+              Reviews
+            </Link>
+          </li>
         </ul>
       )}
     </div>

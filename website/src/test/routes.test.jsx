@@ -59,4 +59,10 @@ describe('App route table (the real routes, not a local test harness)', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText(/page not found/i)).not.toBeInTheDocument()
   })
+
+  it('renders the Reviews page at /reviews (placeholder until Firebase is configured)', async () => {
+    renderAppAt('/reviews')
+    expect(await screen.findByText(/Reviews are coming soon/i)).toBeInTheDocument()
+    expect(screen.queryByText(/page not found/i)).not.toBeInTheDocument()
+  })
 })
