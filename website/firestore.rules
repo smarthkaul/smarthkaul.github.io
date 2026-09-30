@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Paste this into Firebase console → Firestore Database → Rules, then Publish.
+// Replace OWNER_UID with your user ID (the Reviews page shows it the first
+// time you sign in). Keep the limits in sync with src/data/reviews.js.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null && request.auth.uid == "OWNER_UID";
+    }
+
+    function isValidReview(r) {
+      return r.keys().hasOnly(["title", "category", "rating", "body", "createdAt", "updatedAt"])
+        && r.title is string && r.title.size() > 0 && r.title.size() <= 120
+        && r.category in ["movies", "live-events", "food-and-drinks", "sports", "music"]
+        && r.rating in [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
+        && r.body is string && r.body.size() > 0 && r.body.size() <= 10000
+        && r.updatedAt == request.time;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isOwner() && isValidReview(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if isOwner() && isValidReview(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner();
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
