@@ -21,7 +21,7 @@
 - `prefers-reduced-motion` → every scripted motion is instant (`progress(1)`/`progress(0)`, zero-duration serve, teleporting ball).
 - A target hit stays silent. The crowd groan (`src/assets/crowd-aww.mp3`, volume 0.08) plays on `out` and `beyond` only.
 - All npm commands run from `website/`. `npm run lint`, `npm run test`, `npm run build` must pass at the end of every task.
-- Commit after every task. Commit messages: imperative subject, no AI co-author trailer except the one the session reminder requires (`Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`).
+- Commit after every task. Commit messages: imperative subject, plain body, no AI attribution of any kind.
 - Keep the existing image-to-slot mapping from `Player.jsx`: the file `right-arm.png` is drawn in the **left** arm slot and `left-arm.png` is the swinging racket arm.
 
 ## Review Focus
@@ -480,9 +480,7 @@ Expected: PASS (all tests in both files).
 ```bash
 cd website && npm run lint
 cd .. && git add website/src/iso/projection.js website/src/iso/projection.test.js website/src/iso/court.js website/src/iso/court.test.js
-git commit -m "Add isometric projection and court geometry modules
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add isometric projection and court geometry modules"
 ```
 
 ---
@@ -674,9 +672,7 @@ Expected: PASS (7 tests). If "lands the ball on the aim point" misses by more th
 ```bash
 cd website && npm run lint
 cd .. && git add website/src/iso/ballistics.js website/src/iso/ballistics.test.js
-git commit -m "Add ball ballistics with exact landing and cartoon bounces
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add ball ballistics with exact landing and cartoon bounces"
 ```
 
 ---
@@ -960,9 +956,7 @@ Expected: PASS (10 tests).
 ```bash
 cd website && npm run lint
 cd .. && git add website/src/iso/rig.js website/src/iso/rig.test.js
-git commit -m "Add the procedural player rig with serve and celebration timelines
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add the procedural player rig with serve and celebration timelines"
 ```
 
 ---
@@ -1206,9 +1200,7 @@ Expected: PASS (4 tests). GSAP sets `visibility: inherit` when `autoAlpha` reach
 ```bash
 cd website && npm run lint
 cd .. && git add website/src/components/iso/BroadcastTransition.jsx website/src/components/iso/BroadcastTransition.test.jsx
-git commit -m "Add the broadcast wipe overlay and its reversible GSAP timeline
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add the broadcast wipe overlay and its reversible GSAP timeline"
 ```
 
 ---
@@ -1345,9 +1337,7 @@ Expected: PASS (7 tests).
 ```bash
 cd website && npm run lint
 cd .. && git add website/src/iso/controls.js website/src/iso/controls.test.js
-git commit -m "Add screen-relative WASD controls for the isometric court
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add screen-relative WASD controls for the isometric court"
 ```
 
 ---
@@ -1888,9 +1878,7 @@ Expected: PASS (4 tests). The Proxy-based fake context records every method call
 ```bash
 cd website && npm run lint
 cd .. && git add website/src/iso/render.js website/src/iso/render.test.js
-git commit -m "Add the Canvas 2D isometric court renderer
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add the Canvas 2D isometric court renderer"
 ```
 
 ---
@@ -2419,9 +2407,7 @@ Expected: PASS (11 tests). Watch for:
 ```bash
 cd website && npm run lint && npm run test
 cd .. && git add website/src/iso/scene.js website/src/iso/scene.test.js
-git commit -m "Add the isometric scene controller: input, camera, ball life cycle
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add the isometric scene controller: input, camera, ball life cycle"
 ```
 
 ---
@@ -2682,9 +2668,7 @@ Expected: PASS (6 tests). `fireEvent.pointerDown` in jsdom carries `pointerType`
 ```bash
 cd website && npm run lint
 cd .. && git add website/src/components/iso/IsoCourt.jsx website/src/components/iso/IsoCourt.test.jsx
-git commit -m "Add the IsoCourt canvas wrapper with keyboard, pointer and touch input
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Add the IsoCourt canvas wrapper with keyboard, pointer and touch input"
 ```
 
 ---
@@ -3002,9 +2986,7 @@ git commit -m "Mount the isometric court and the reversible broadcast transition
 Replaces the top-down drag-to-serve hub with the Canvas 2D isometric court,
 runs one GSAP timeline per section visit (forward on entry, reverse on exit),
 stops rendering the cold-open on this prototype branch, and removes the
-retired SVG Ball and Player.
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+retired SVG Ball and Player."
 ```
 
 ---
@@ -3044,7 +3026,5 @@ Expected: all green; `dist/` is not tracked.
 
 ```bash
 cd .. && git add AGENTS.md
-git commit -m "Document the isometric court prototype branch
-
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "Document the isometric court prototype branch"
 ```
