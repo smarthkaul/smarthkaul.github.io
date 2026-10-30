@@ -6,7 +6,7 @@ const TONES = {
 
 const Badge = ({ children, tone = "ball", className = "" }) => (
   <span
-    className={`inline-flex items-center font-mono text-[0.7rem] uppercase tracking-widest px-2.5 py-1 rounded-full ${TONES[tone]} ${className}`}
+    className={`inline-flex items-center font-mono text-label font-medium uppercase tracking-widest px-2.5 py-1 rounded-full ${TONES[tone]} ${className}`}
   >
     {children}
   </span>

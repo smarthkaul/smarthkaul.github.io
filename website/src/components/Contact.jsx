@@ -13,7 +13,7 @@ const Contact = () => {
           title="Let's work together."
           headerRight={<Badge tone="ball">Match Point</Badge>}
         >
-          <p className="text-charcoal/70 text-lg leading-relaxed mb-8 max-w-md">
+          <p className="text-charcoal/75 text-lg leading-relaxed mb-8 max-w-md">
             I graduated from the University of Toronto in 2026 and I&apos;m looking for
             full-time roles in machine learning and data science. If you have a role, a
             problem you&apos;re stuck on, or just want to talk — return serve.
@@ -23,12 +23,12 @@ const Contact = () => {
             href="mailto:kaul.smarth02@gmail.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 bg-wimbledon hover:bg-grass text-white font-display font-bold px-6 py-4 rounded-xl transition-colors mb-3"
+            className="inline-flex items-center gap-3 bg-wimbledon hover:bg-grass text-white font-display font-bold text-lg tracking-display px-6 py-4 rounded-xl transition-colors mb-3"
           >
             <span>Return serve</span>
             <span aria-hidden="true">&rarr;</span>
           </a>
-          <p className="font-mono text-xs text-charcoal/50 break-all">
+          <p className="font-mono text-label tracking-wide text-charcoal/55 break-all">
             kaul.smarth02@gmail.com
           </p>
         </StatCard>

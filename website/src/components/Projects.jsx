@@ -11,21 +11,21 @@ const ProjectCard = ({ project }) => (
   <StatCard broadcast="Highlight Reel" headerRight={<Badge tone="ball">Replay</Badge>}>
     <div className="flex items-start justify-between gap-4 mb-4">
       <h3
-        className="font-display font-extrabold text-charcoal leading-tight"
-        style={{ fontSize: "clamp(1.4rem, 3.5vw, 2rem)" }}
+        className="font-display font-extrabold text-charcoal tracking-display leading-[1.05]"
+        style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.125rem)" }}
       >
         {project.title}
       </h3>
       <div className="text-right shrink-0">
-        <div className="font-mono font-bold text-charcoal text-2xl leading-none">
+        <div className="font-mono font-bold tabular-nums text-charcoal text-2xl leading-none">
           {project.hero}
         </div>
-        <div className="font-mono text-[0.6rem] uppercase tracking-widest text-charcoal/50 mt-1">
+        <div className="font-mono text-label uppercase tracking-eyebrow text-charcoal/55 mt-1.5">
           {project.heroLabel}
         </div>
       </div>
     </div>
-    <p className="text-charcoal/70 leading-relaxed mb-5">{project.description}</p>
+    <p className="text-charcoal/75 leading-relaxed mb-5">{project.description}</p>
     <div className="flex flex-wrap gap-2 mb-5">
       {project.tech.map((t) => (
         <Badge key={t} tone="outline">
@@ -81,7 +81,7 @@ const Projects = () => {
       <section id="projects" className="px-6 sm:px-12 lg:px-24 py-16">
         <div ref={ref} className={`max-w-3xl mx-auto reveal ${visible ? "visible" : ""}`}>
           <h2 className="sr-only">Projects</h2>
-          <p className="font-mono text-cream text-xs uppercase tracking-widest mb-4">
+          <p className="font-mono text-cream text-label font-semibold uppercase tracking-eyebrow text-shadow-broadcast mb-4">
             Highlight Reel
           </p>
           <div className="grid grid-cols-1 gap-6">

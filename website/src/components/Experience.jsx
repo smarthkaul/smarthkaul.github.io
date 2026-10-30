@@ -62,12 +62,12 @@ const MatchRow = ({ job }) => {
         className="w-full text-left py-4 flex items-baseline justify-between gap-4"
       >
         <div className="flex items-baseline gap-4 min-w-0">
-          <span className="font-mono text-charcoal/40 text-xs shrink-0">{job.year}</span>
+          <span className="font-mono text-label tabular-nums text-charcoal/50 shrink-0">{job.year}</span>
           <span className="min-w-0">
-            <span className="font-display font-bold text-charcoal block truncate">
+            <span className="font-display font-bold text-charcoal text-lg tracking-display leading-tight block truncate">
               {job.company}
             </span>
-            <span className="font-mono text-[0.7rem] uppercase tracking-widest text-grass-dark">
+            <span className="font-mono text-label font-semibold uppercase tracking-eyebrow text-grass-dark">
               {job.result}
             </span>
           </span>
@@ -84,10 +84,10 @@ const MatchRow = ({ job }) => {
 
       {open && (
         <div className="pb-5 pl-10">
-          <p className="font-mono text-[0.7rem] uppercase tracking-widest text-charcoal/40 mb-2">
+          <p className="font-mono text-label uppercase tracking-eyebrow text-charcoal/50 mb-2">
             {job.dates}
           </p>
-          <p className="text-charcoal/70 text-sm leading-relaxed mb-3">
+          <p className="text-charcoal/75 text-[0.9375rem] leading-relaxed mb-3">
             <span className="font-semibold text-charcoal">{job.role}</span> — {job.summary}
           </p>
           <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -101,7 +101,7 @@ const MatchRow = ({ job }) => {
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-xs uppercase tracking-widest text-wimbledon hover:text-grass-dark transition-colors"
+            className="font-mono text-label font-semibold uppercase tracking-eyebrow text-wimbledon hover:text-grass-dark transition-colors"
           >
             Visit {job.company} &#8599;
           </a>
