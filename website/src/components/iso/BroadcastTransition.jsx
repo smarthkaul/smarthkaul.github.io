@@ -99,7 +99,9 @@ export default BroadcastTransition;
 // One reversible timeline per section visit. Forward = court → content;
 // reverse() = content → court. Every value is set through tweens (fromTo /
 // set) so reverse restores the exact start state.
-export function buildTransition({ els, cam, focus, zoomFactor = 3, content, card, reduced }) {
+// `zoomTo` is the absolute zoom to push in to; without it the camera zooms to
+// `zoomFactor` × wherever it started.
+export function buildTransition({ els, cam, focus, zoomTo, zoomFactor = 3, content, card, reduced }) {
   const d = (seconds) => (reduced ? 0 : seconds);
   // No overwrite mode: every tween here is sequenced, and "auto" would kill
   // the sweep-in's xPercent so the panels could never travel back on reverse.
@@ -115,7 +117,7 @@ export function buildTransition({ els, cam, focus, zoomFactor = 3, content, card
   tl.fromTo(
     cam,
     { x: from.x, y: from.y, zoom: from.zoom },
-    { x: focus.x, y: focus.y, zoom: from.zoom * zoomFactor, duration: d(0.85), ease: "power3.inOut" },
+    { x: focus.x, y: focus.y, zoom: zoomTo ?? from.zoom * zoomFactor, duration: d(0.85), ease: "power3.inOut" },
     d(0.1)
   );
 

@@ -68,3 +68,26 @@ export function screenToGround(sx, sy, cam, viewport) {
   const py = (sy - viewport.height / 2) / cam.zoom + cam.y;
   return unproject(px, py);
 }
+
+// --- follow camera ---
+// Zooms are multiples of the fitted zoom (the whole-scene framing), so they
+// hold across viewport sizes. Rates are exponential-damping constants (1/s):
+// higher = snappier. Tuned by eye for a broadcast-crane feel — smooth and a
+// touch behind the action, never snapping.
+export const FOLLOW_ZOOM = 1.7;   // × fitZoom, on the player
+export const BALL_ZOOM = 1.35;    // × fitZoom, while a served ball is in the air
+export const PAN_RATE = 4;
+export const ZOOM_RATE = 3;
+export const LOOK_AHEAD = 0.3;    // fraction of the way from the player toward the aim
+export const BALL_HOLD = 0.6;     // seconds held on the ball after its first contact
+export const FOLLOW_LIFT = 0.8;   // metres — frame the figure's middle, not its feet
+
+// Moves `cam` a damped step toward `target` ({x, y, zoom}). k = 1 snaps.
+export function dampCamera(cam, target, dt, panRate = PAN_RATE, zoomRate = ZOOM_RATE) {
+  const kp = 1 - Math.exp(-dt * panRate);
+  const kz = 1 - Math.exp(-dt * zoomRate);
+  cam.x += (target.x - cam.x) * kp;
+  cam.y += (target.y - cam.y) * kp;
+  cam.zoom += (target.zoom - cam.zoom) * kz;
+  return cam;
+}

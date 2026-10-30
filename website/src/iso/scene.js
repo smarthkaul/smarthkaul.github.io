@@ -1,9 +1,15 @@
 import gsap from "gsap";
-import { project, projectBounds, fitCamera, screenToGround } from "./projection";
+import {
+  project, projectBounds, fitCamera, screenToGround, dampCamera,
+  FOLLOW_ZOOM, BALL_ZOOM, LOOK_AHEAD, BALL_HOLD, FOLLOW_LIFT,
+} from "./projection";
 import { SPAWN, AIM_RANGE, TARGETS, sceneCorners, classifyLanding, clampAim, clampPlayer, targetCenter, targetContains } from "./court";
 import { GRAVITY, LAUNCH_HEIGHT, launchVelocity, createBallBody, stepBall } from "./ballistics";
 import { moveVector, smoothVelocity, WALK_SPEED } from "./controls";
-import { createRig, updateRig, startStopTween, serveTimeline, celebrationTimeline } from "./rig";
+import {
+  createRig, updateRig, startStopTween, serveTimeline, celebrationTimeline,
+  jumpTakeoffTimeline, jumpLandTween, JUMP_GRAVITY, JUMP_VELOCITY,
+} from "./rig";
 import { renderScene } from "./render";
 import { SECTIONS } from "../data/sections";
 
@@ -13,6 +19,10 @@ import { SECTIONS } from "../data/sections";
 
 const TRAIL_LENGTH = 18;
 const DUST_COUNT = 7;
+const ARRIVE_RADIUS = 0.15; // metres — walkTo() counts this as arrived
+
+export { FOLLOW_ZOOM, BALL_ZOOM, PAN_RATE, ZOOM_RATE, LOOK_AHEAD, BALL_HOLD } from "./projection";
+export const CAMERA_MODES = ["follow", "ball", "fit"];
 
 export function createScene({ canvas, images = {}, reduced = false, topInset = 0, onLand, onServe }) {
   const ctx = canvas.getContext ? canvas.getContext("2d") : null;
@@ -22,6 +32,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
 
   const state = {
     cam: { x: 0, y: 0, zoom: 1 },
+    camMode: "follow",   // 'follow' (player) | 'ball' (served ball) | 'fit' (whole scene, static)
     fitZoom: 1,
     t: 0,
     player: { u: SPAWN.u, v: SPAWN.v, rig: createRig() },
@@ -35,7 +46,8 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   const keys = new Set();
   let pointer = null;     // { x, y } CSS px on the canvas
   let tapAim = null;      // { u, v } world aim set by a touch tap
-  let autoWalk = null;    // { u, v } tap target to walk toward
+  let autoWalk = null;    // { u, v } tap target to walk toward, then serve
+  let script = null;      // { u, v, onArrive, speed } walkTo() target — no serve, no clamp
   let stuckTime = 0;
   let inputEnabled = true;
   let camLocked = false;
@@ -43,6 +55,10 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   let hidden = false;
   let body = null;        // ballistics body while the ball is in flight
   let struck = true;      // false between toss start and the strike (movement locked)
+  let ballHold = 0;       // seconds left holding on the ball before returning to follow
+  let fitCam = { x: 0, y: 0, zoom: 1 };
+  const bump = { y: 0 };  // camera kick, layered on top of the damped camera
+  let bumpApplied = 0;
   const live = new Set(); // tweens/timelines to kill on destroy
 
   // Wraps (never replaces) the tween's own onComplete — serveTimeline,
@@ -58,13 +74,68 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   };
 
   // --- camera ---
-  const fit = () => {
+  // Recomputes the whole-scene framing (and fitZoom) for the current viewport.
+  const computeFit = () => {
     const vp = { width: viewport.width, height: Math.max(1, viewport.height - topInset) };
     const cam = fitCamera(vp, projectBounds(sceneCorners()));
-    state.cam.x = cam.x;
-    state.cam.y = cam.y - topInset / (2 * cam.zoom); // centre in the strip below the navbar
-    state.cam.zoom = cam.zoom;
+    fitCam = { x: cam.x, y: cam.y - topInset / (2 * cam.zoom), zoom: cam.zoom }; // centre below the navbar
     state.fitZoom = cam.zoom;
+  };
+
+  // Where the camera wants to be in the current mode.
+  const cameraTarget = () => {
+    const mode = state.camMode;
+    if (mode === "fit") return fitCam;
+    let zoom;
+    let pt;
+    if (mode === "ball") {
+      const b = state.ball;
+      zoom = state.fitZoom * BALL_ZOOM;
+      pt = project(b.u, b.v, b.z * 0.5);
+    } else {
+      const p = state.player;
+      zoom = state.fitZoom * FOLLOW_ZOOM;
+      const a = state.aim;
+      const u = a ? p.u + (a.u - p.u) * LOOK_AHEAD : p.u;
+      const v = a ? p.v + (a.v - p.v) * LOOK_AHEAD : p.v;
+      pt = project(u, v, FOLLOW_LIFT);
+    }
+    return { x: pt.x, y: pt.y - topInset / (2 * zoom), zoom };
+  };
+
+  const snapCamera = () => {
+    if (camLocked) return;
+    Object.assign(state.cam, cameraTarget());
+    bumpApplied = 0;
+  };
+
+  const stepCamera = (dt) => {
+    if (camLocked) return;
+    const cam = state.cam;
+    cam.y -= bumpApplied;
+    if (state.camMode === "ball" && ballHold > 0) {
+      ballHold -= dt;
+      if (ballHold <= 0) state.camMode = "follow";
+    }
+    if (reduced) Object.assign(cam, cameraTarget());
+    else dampCamera(cam, cameraTarget(), dt);
+    bumpApplied = bump.y;
+    cam.y += bumpApplied;
+  };
+
+  const setCameraMode = (mode) => {
+    if (!CAMERA_MODES.includes(mode)) return;
+    state.camMode = mode;
+    ballHold = 0;
+  };
+
+  // Deep-link / fallback camera: frame the whole scene and hold there until
+  // setCameraMode() asks for something else.
+  const fit = () => {
+    computeFit();
+    setCameraMode("fit");
+    Object.assign(state.cam, fitCam);
+    bumpApplied = 0;
   };
 
   const resize = (width, height, ratio = 1) => {
@@ -75,7 +146,8 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
       canvas.width = Math.round(viewport.width * dpr);
       canvas.height = Math.round(viewport.height * dpr);
     }
-    if (!camLocked) fit();
+    computeFit();
+    snapCamera(); // a viewport change is a cut, not a pan
   };
 
   const focus = (sectionId) => {
@@ -85,9 +157,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
 
   const kickCamera = () => {
     if (reduced || camLocked) return;
-    const dy = 2 / state.cam.zoom;
-    const y0 = state.cam.y;
-    track(gsap.fromTo(state.cam, { y: y0 + dy }, { y: y0, duration: 0.12, ease: "power2.out" }));
+    track(gsap.fromTo(bump, { y: 2 / state.cam.zoom }, { y: 0, duration: 0.12, ease: "power2.out", overwrite: "auto" }));
   };
 
   // --- aim ---
@@ -155,6 +225,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     spawnDust(e.u, e.v);
     if (!reduced) track(gsap.fromTo(b, { scaleX: 1.35, scaleY: 0.65 }, { scaleX: 1, scaleY: 1, duration: 0.35, ease: "elastic.out(1, 0.4)", overwrite: "auto" }));
     if (!e.first) return;
+    if (state.camMode === "ball") ballHold = BALL_HOLD;
     const point = { u: e.u, v: e.v };
     const result = classifyLanding(point);
     if (result.type === "hit") {
@@ -176,6 +247,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     Object.assign(b, { phase: "flight", u: body.u, v: body.v, z: body.z, vu: body.vu, vv: body.vv, vz: body.vz, trail: [], alpha: 1, scaleX: 1, scaleY: 1 });
     tapAim = null;
     kickCamera();
+    if (!reduced) setCameraMode("ball");
     if (reduced) {
       // No flight: land on the aim point now.
       body = null;
@@ -186,7 +258,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   };
   const serve = () => {
     const rig = state.player.rig;
-    if (!inputEnabled || !state.aim || state.ball.phase !== "hand" || rig.serving) return false;
+    if (!inputEnabled || !state.aim || state.ball.phase !== "hand" || rig.serving || rig.airborne) return false;
     const target = { u: state.aim.u, v: state.aim.v };
     state.ball.phase = "toss";
     struck = false;
@@ -208,13 +280,55 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     }
   };
 
+  // --- jump ---
+  const jump = () => {
+    const rig = state.player.rig;
+    if (!inputEnabled || rig.serving || !struck || rig.airborne) return false;
+    rig.airborne = true;
+    rig.vz = JUMP_VELOCITY;
+    if (!reduced) track(jumpTakeoffTimeline(rig));
+    return true;
+  };
+  const land = () => {
+    const p = state.player;
+    spawnDust(p.u, p.v);
+    spawnRipple(p.u, p.v);
+    kickCamera();
+    if (!reduced) track(jumpLandTween(p.rig));
+  };
+  const stepJump = (dt) => {
+    const rig = state.player.rig;
+    if (!rig.airborne) return;
+    rig.vz -= JUMP_GRAVITY * dt;
+    rig.z += rig.vz * dt;
+    if (rig.z <= 0) {
+      rig.z = 0;
+      rig.vz = 0;
+      rig.airborne = false;
+      land();
+    }
+  };
+
   // --- movement ---
   const stepPlayer = (dt) => {
     const p = state.player;
     const rig = p.rig;
     const canMove = inputEnabled && struck;
     let dir = { u: 0, v: 0 };
-    if (canMove) {
+    let speedScale = 1;
+    if (script && struck) {
+      const du = script.u - p.u;
+      const dv = script.v - p.v;
+      const d = Math.hypot(du, dv);
+      if (d <= ARRIVE_RADIUS) {
+        const { onArrive } = script;
+        script = null;
+        onArrive?.();
+      } else {
+        dir = { u: du / d, v: dv / d };
+        speedScale = script.speed;
+      }
+    } else if (canMove) {
       if (autoWalk) {
         const du = autoWalk.u - p.u;
         const dv = autoWalk.v - p.v;
@@ -234,10 +348,11 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
         dir = moveVector(keys);
       }
     }
-    smoothVelocity(vel, { u: dir.u * WALK_SPEED, v: dir.v * WALK_SPEED }, dt);
+    smoothVelocity(vel, { u: dir.u * WALK_SPEED * speedScale, v: dir.v * WALK_SPEED * speedScale }, dt);
     const speed = Math.hypot(vel.u, vel.v);
     if (speed > 0.02) {
-      const next = clampPlayer({ u: p.u + vel.u * dt, v: p.v + vel.v * dt });
+      const raw = { u: p.u + vel.u * dt, v: p.v + vel.v * dt };
+      const next = script ? raw : clampPlayer(raw);
       p.u = next.u;
       p.v = next.v;
     } else {
@@ -246,7 +361,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     }
     const intent = dir.u !== 0 || dir.v !== 0;
     const dirX = intent ? Math.sign(dir.u + dir.v) : 0; // screen-x sign of the move
-    const ev = updateRig(rig, { moving: intent, speed, dirX }, dt, state.t);
+    const ev = updateRig(rig, { moving: intent, speed, dirX, airborne: rig.airborne }, dt, state.t);
     if (ev && !reduced) track(startStopTween(rig, ev));
     if (!intent && state.aim && !rig.serving) {
       rig.facing = (state.aim.u + state.aim.v) - (p.u + p.v) < 0 ? -1 : 1;
@@ -258,8 +373,10 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     state.t += dt;
     updateAim();
     stepPlayer(dt);
+    stepJump(dt);
     stepBallState(dt);
     stepEffects(dt);
+    stepCamera(dt);
   };
 
   const render = () => {
@@ -298,7 +415,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   const clearPointer = () => { pointer = null; };
   const setKey = (code, down) => {
     if (down) keys.add(code); else keys.delete(code);
-    if (down) { autoWalk = null; tapAim = null; }
+    if (down && inputEnabled) { autoWalk = null; tapAim = null; script = null; }
   };
   const clearKeys = () => keys.clear();
   const setInputEnabled = (enabled) => {
@@ -319,16 +436,36 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     }
   };
 
-  fit();
+  // Scripted walk (the cold-open walk-in): walks the player to `point` at
+  // `speed` × WALK_SPEED, ignoring inputEnabled and the player bounds, then
+  // calls onArrive. No serve. A movement key (with input enabled) cancels it.
+  const walkTo = (point, onArrive, { speed = 1 } = {}) => {
+    autoWalk = null;
+    script = { u: point.u, v: point.v, onArrive, speed };
+  };
+  // Puts the player somewhere directly (may be outside the bounds); the ball
+  // in hand comes along.
+  const placePlayer = ({ u, v }) => {
+    const p = state.player;
+    p.u = u;
+    p.v = v;
+    vel.u = 0;
+    vel.v = 0;
+    if (state.ball.phase === "hand") { state.ball.u = u; state.ball.v = v; }
+  };
+
+  computeFit();
+  snapCamera();
 
   return {
     state,
     cam: state.cam,
     start, stop, destroy, resize, fit,
-    lockCamera: (locked) => { camLocked = locked; },
+    setCameraMode, snapCamera,
+    lockCamera: (locked) => { camLocked = locked; bumpApplied = 0; },
     focus,
     setImages: (next) => { imgs = next; },
     setPointer, clearPointer, setKey, clearKeys, setInputEnabled,
-    serve, tap, step,
+    serve, tap, step, jump, walkTo, placePlayer,
   };
 }

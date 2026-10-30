@@ -19,6 +19,7 @@ const fakeScene = () => ({
   lockCamera: vi.fn(), focus: vi.fn(() => ({ x: 0, y: 0 })), setImages: vi.fn(),
   setPointer: vi.fn(), clearPointer: vi.fn(), setKey: vi.fn(), clearKeys: vi.fn(),
   setInputEnabled: vi.fn(), serve: vi.fn(() => true), tap: vi.fn(), step: vi.fn(),
+  jump: vi.fn(() => true), setCameraMode: vi.fn(),
   cam: { x: 0, y: 0, zoom: 1 }, state: {},
 });
 let scene;
@@ -53,14 +54,32 @@ describe("IsoCourt", () => {
     expect(screen.getByText(/use the menu to jump to a section/i)).toBeInTheDocument();
   });
 
-  it("forwards movement keys and serves on Space from the page body", () => {
+  it("forwards movement keys, jumps on Space and serves on Enter from the page body", () => {
     render(<IsoCourt />);
     fireEvent.keyDown(window, { code: "KeyW" });
     expect(scene.setKey).toHaveBeenCalledWith("KeyW", true);
     fireEvent.keyUp(window, { code: "KeyW" });
     expect(scene.setKey).toHaveBeenCalledWith("KeyW", false);
     fireEvent.keyDown(window, { code: "Space" });
+    expect(scene.jump).toHaveBeenCalledTimes(1);
+    expect(scene.serve).not.toHaveBeenCalled();
+    fireEvent.keyDown(window, { code: "Space", repeat: true });
+    expect(scene.jump).toHaveBeenCalledTimes(1); // holding Space does not bunny-hop
+    fireEvent.keyDown(window, { code: "Enter" });
     expect(scene.serve).toHaveBeenCalledTimes(1);
+    expect(scene.jump).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves Space alone when the court is not taking input", () => {
+    render(<IsoCourt inputEnabled={false} />);
+    const notPrevented = fireEvent.keyDown(window, { code: "Space" });
+    expect(notPrevented).toBe(true);
+    expect(scene.jump).not.toHaveBeenCalled();
+  });
+
+  it("mentions the jump in the hint", () => {
+    render(<IsoCourt />);
+    expect(screen.getByText("WASD to move · aim with the mouse · click to serve · space to jump")).toBeInTheDocument();
   });
 
   it("does not serve on Enter when a link has focus", () => {

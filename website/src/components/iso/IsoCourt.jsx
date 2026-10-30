@@ -40,6 +40,8 @@ const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true }) => {
   // Latest callbacks without rebuilding the scene when they change identity.
   const callbacks = useRef({ onReady, onLand, onServe });
   callbacks.current = { onReady, onLand, onServe };
+  const inputRef = useRef(inputEnabled);
+  inputRef.current = inputEnabled;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -70,7 +72,15 @@ const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true }) => {
       if (isMovementKey(e.code)) {
         scene.setKey(e.code, true);
         e.preventDefault();
-      } else if ((e.code === "Space" || e.code === "Enter") && document.activeElement === document.body) {
+      } else if (document.activeElement !== document.body) {
+        // A focused link or button keeps Space / Enter for itself.
+      } else if (e.code === "Space") {
+        // On the court Space is always the jump (held = no auto-repeat, and
+        // never a page scroll); over a section it scrolls as usual.
+        if (!inputRef.current) return;
+        e.preventDefault();
+        if (!e.repeat) scene.jump();
+      } else if (e.code === "Enter") {
         if (scene.serve()) e.preventDefault();
       }
     };
@@ -129,11 +139,11 @@ const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true }) => {
       />
       {hintVisible && inputEnabled && (
         <p className="fixed bottom-6 inset-x-0 z-10 text-center font-mono text-cream/50 text-[0.7rem] uppercase tracking-widest pointer-events-none">
-          {coarse ? "Tap where you want to serve" : "WASD to move · aim with the mouse · click to serve"}
+          {coarse ? "Tap where you want to serve" : "WASD to move · aim with the mouse · click to serve · space to jump"}
         </p>
       )}
       <p className="sr-only">
-        Move with W, A, S and D, aim with the mouse and click to serve into a zone, or use the menu to jump to a section.
+        Move with W, A, S and D, aim with the mouse and click or press Enter to serve into a zone, press Space to jump, or use the menu to jump to a section.
       </p>
     </>
   );

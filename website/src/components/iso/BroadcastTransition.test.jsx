@@ -58,6 +58,19 @@ describe("BroadcastTransition", () => {
     tl.kill();
   });
 
+  it("zooms to an absolute zoomTo when given one", () => {
+    const { ref, content, card } = setup();
+    const cam = { x: 0, y: 0, zoom: 1.6 };
+    const tl = buildTransition({
+      els: ref.current.getEls(), cam, focus: { x: 5, y: 5 }, zoomTo: 2.4, content, card, reduced: false,
+    });
+    tl.progress(1);
+    expect(cam.zoom).toBeCloseTo(2.4);
+    tl.progress(0);
+    expect(cam.zoom).toBeCloseTo(1.6);
+    tl.kill();
+  });
+
   it("is instant under reduced motion", () => {
     const { ref, content, card } = setup();
     const tl = buildTransition({

@@ -17,6 +17,11 @@ import Contact from "../components/Contact";
 // behind the shot rather than a jump-scare on a quiet page.
 const SFX_VOLUME = 0.08;
 
+// How far the broadcast transition pushes in, as a multiple of the scene's
+// fitted (whole-court) zoom — absolute, so it lands the same however the
+// follow camera was framed when the ball landed.
+const TRANSITION_ZOOM = 3.4;
+
 const SECTION_COMPONENTS = {
   about: About,
   experience: Experience,
@@ -124,14 +129,15 @@ const CourtStage = () => {
     const cam = scene?.cam ?? { x: 0, y: 0, zoom: 1 };
     const focus = scene ? scene.focus(displayed.id) : { x: 0, y: 0 };
     scene?.lockCamera(true);
-    const tl = buildTransition({ els, cam, focus, content, card, reduced });
+    const zoomTo = scene ? scene.state.fitZoom * TRANSITION_ZOOM : undefined;
+    const tl = buildTransition({ els, cam, focus, zoomTo, content, card, reduced });
     tl.eventCallback("onComplete", () => {
       setPhase("shown");
       focusHeading(content);
     });
     tl.eventCallback("onReverseComplete", () => {
       scene?.lockCamera(false);
-      scene?.fit();
+      scene?.setCameraMode("follow"); // ease back to the player rather than cut
       const next = pendingRef.current;
       pendingRef.current = null;
       if (next) {

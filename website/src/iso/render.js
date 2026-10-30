@@ -1,11 +1,23 @@
-import { K, project, worldToScreen, isoRadii } from "./projection";
-import { COURT_M, LINES, TARGETS, SCENE, AIM_RANGE } from "./court";
+import { K, project, worldToScreen, isoRadii, FOLLOW_ZOOM } from "./projection";
+import { COURT_M, LINES, TARGETS, AIM_RANGE } from "./court";
 import { PARTS, PIVOTS, RACKET, UNIT, TOSS_APEX, handPoint } from "./rig";
 import { SECTIONS } from "../data/sections";
 
 // Canvas 2D renderer. Reads the scene state, never mutates it.
 
 export const BALL_RADIUS = 0.3; // metres — cartoon scale, like the figure
+
+// The follow camera only shows part of the scene, so the mow stripes run far
+// past it: you should never find their edge.
+export const STRIPE_EXTENT = 60; // metres either side of the court centre
+
+// Target labels stay fully readable up to the follow zoom and fade out as the
+// broadcast transition pushes in (ratios of FOLLOW_ZOOM × fitZoom).
+export const LABEL_FADE_START = 1.15;
+export const LABEL_FADE_END = 1.6;
+
+// Total height of the figure's feet off the ground, in metres.
+export const playerHeight = (rig) => rig.bob + rig.hop + (rig.z ?? 0);
 
 export const COLORS = {
   turf: "#2f8f4e",
@@ -50,8 +62,9 @@ function drawTurf(ctx, scene, viewport) {
   ctx.fillRect(0, 0, viewport.width, viewport.height);
   // Mow stripes along u, 2 m wide, in world space so they zoom with the court.
   ctx.fillStyle = COLORS.stripe;
-  for (let u = Math.floor(SCENE.uMin); u < SCENE.uMax; u += 4) {
-    groundPoly(ctx, scene, viewport, [[u, SCENE.vMin], [u + 2, SCENE.vMin], [u + 2, SCENE.vMax], [u, SCENE.vMax]]);
+  const E = STRIPE_EXTENT;
+  for (let u = -E; u < E; u += 4) {
+    groundPoly(ctx, scene, viewport, [[u, -E], [u + 2, -E], [u + 2, E], [u, E]]);
     ctx.fill();
   }
 }
@@ -234,12 +247,14 @@ export function figureScale(scene) {
 function drawPlayer(ctx, scene, viewport, images) {
   const { player } = scene;
   const rig = player.rig;
-  const feet = toScreen(scene, viewport, player.u, player.v, rig.bob + rig.hop);
+  const feet = toScreen(scene, viewport, player.u, player.v, playerHeight(rig));
   const s = figureScale(scene);
+  const sx = rig.squashX * (rig.flexX ?? 1);
+  const sy = rig.squashY * (rig.flexY ?? 1);
   ctx.save();
   ctx.translate(feet.x, feet.y);
   ctx.rotate(rig.lean * rig.facing);
-  ctx.scale(s * rig.facing * rig.squashX, s * rig.squashY);
+  ctx.scale(s * rig.facing * sx, s * sy);
   // Left arm (back), pivoting at its shoulder.
   ctx.save();
   ctx.translate(PIVOTS.shoulderL.x, PIVOTS.shoulderL.y);
@@ -271,12 +286,14 @@ export function ballScreenPoint(scene, viewport) {
   const { ball, player } = scene;
   if (ball.phase === "hand" || ball.phase === "toss") {
     const rig = player.rig;
-    const feet = toScreen(scene, viewport, player.u, player.v, rig.bob + rig.hop);
+    const feet = toScreen(scene, viewport, player.u, player.v, playerHeight(rig));
     const s = figureScale(scene);
     const hand = handPoint(rig);
     const fx = hand.x + (TOSS_APEX.x - hand.x) * rig.toss;
     const fy = hand.y + (TOSS_APEX.y - hand.y) * rig.toss - 6;
-    return { x: feet.x + fx * s * rig.facing * rig.squashX, y: feet.y + fy * s * rig.squashY, angle: 0 };
+    const sx = rig.squashX * (rig.flexX ?? 1);
+    const sy = rig.squashY * (rig.flexY ?? 1);
+    return { x: feet.x + fx * s * rig.facing * sx, y: feet.y + fy * s * sy, angle: 0 };
   }
   const p = toScreen(scene, viewport, ball.u, ball.v, ball.z);
   const sv = project(ball.vu, ball.vv, ball.vz); // velocity direction on screen
@@ -314,7 +331,8 @@ function drawBallShadow(ctx, scene, viewport) {
   const { ball, player } = scene;
   if (ball.alpha <= 0) return;
   if (ball.phase === "hand" || ball.phase === "toss") {
-    drawShadow(ctx, scene, viewport, player.u, player.v, 1.3 + player.rig.toss * 1.3, BALL_RADIUS * 0.9);
+    const lift = player.rig.hop + (player.rig.z ?? 0);
+    drawShadow(ctx, scene, viewport, player.u, player.v, 1.3 + player.rig.toss * 1.3 + lift, BALL_RADIUS * 0.9);
     return;
   }
   drawShadow(ctx, scene, viewport, ball.u, ball.v, ball.z, BALL_RADIUS);
@@ -356,8 +374,9 @@ function drawEffects(ctx, scene, viewport) {
 }
 
 function drawLabels(ctx, scene, viewport) {
-  const zoomRatio = scene.cam.zoom / (scene.fitZoom || scene.cam.zoom);
-  const alpha = Math.max(0, Math.min(1, 1 - (zoomRatio - 1) / 0.8));
+  const followZoom = (scene.fitZoom || scene.cam.zoom) * FOLLOW_ZOOM;
+  const zoomRatio = scene.cam.zoom / followZoom;
+  const alpha = Math.max(0, Math.min(1, 1 - (zoomRatio - LABEL_FADE_START) / (LABEL_FADE_END - LABEL_FADE_START)));
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -383,7 +402,7 @@ export function renderScene(ctx, scene, viewport, images = {}) {
   drawTurf(ctx, scene, viewport);
   drawCourt(ctx, scene, viewport);
   drawTargets(ctx, scene, viewport);
-  drawShadow(ctx, scene, viewport, scene.player.u, scene.player.v, scene.player.rig.hop, 0.9);
+  drawShadow(ctx, scene, viewport, scene.player.u, scene.player.v, scene.player.rig.hop + (scene.player.rig.z ?? 0), 0.9);
   drawBallShadow(ctx, scene, viewport);
   drawReticle(ctx, scene, viewport);
   const ballFar = scene.ball.phase !== "hand" && scene.ball.phase !== "toss" && scene.ball.u > 0;

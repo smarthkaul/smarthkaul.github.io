@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   K, project, unproject, unprojectDelta, depthKey, isoRadii,
   projectBounds, fitCamera, worldToScreen, screenToGround,
+  dampCamera, FOLLOW_ZOOM, BALL_ZOOM, PAN_RATE, ZOOM_RATE,
 } from "./projection";
 
 describe("projection", () => {
@@ -84,5 +85,32 @@ describe("projection", () => {
     expect(b.maxX).toBeCloseTo(10 * K);
     expect(b.minY).toBeCloseTo(-5 * K);
     expect(b.maxY).toBeCloseTo(0);
+  });
+});
+
+describe("dampCamera", () => {
+  it("eases toward the target without overshooting and converges", () => {
+    const cam = { x: 0, y: 0, zoom: 1 };
+    const target = { x: 100, y: -50, zoom: 2 };
+    dampCamera(cam, target, 1 / 60);
+    expect(cam.x).toBeGreaterThan(0);
+    expect(cam.x).toBeLessThan(10);
+    expect(cam.zoom).toBeGreaterThan(1);
+    for (let i = 0; i < 300; i++) dampCamera(cam, target, 1 / 60);
+    expect(cam.x).toBeCloseTo(100, 1);
+    expect(cam.y).toBeCloseTo(-50, 1);
+    expect(cam.zoom).toBeCloseTo(2, 2);
+  });
+
+  it("is frame-rate independent", () => {
+    const a = { x: 0, y: 0, zoom: 1 };
+    const b = { x: 0, y: 0, zoom: 1 };
+    const target = { x: 100, y: 0, zoom: 1 };
+    for (let i = 0; i < 60; i++) dampCamera(a, target, 1 / 60);
+    for (let i = 0; i < 30; i++) dampCamera(b, target, 1 / 30);
+    expect(a.x).toBeCloseTo(b.x, 6);
+    expect(FOLLOW_ZOOM).toBeGreaterThan(BALL_ZOOM);
+    expect(PAN_RATE).toBeGreaterThan(0);
+    expect(ZOOM_RATE).toBeGreaterThan(0);
   });
 });
