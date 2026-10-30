@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { BOXES, COURT, SERVE_ORIGIN, resolveActiveSection, landingFromPull, classifyLanding } from "../data/sections";
+import { motion } from "framer-motion";
+import { resolveActiveSection } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
-import Court from "../components/court/Court";
+import IsoCourt from "../components/iso/IsoCourt";
+import ColdOpen, { shouldPlay } from "../components/iso/ColdOpen";
+import BroadcastTransition, { buildTransition } from "../components/iso/BroadcastTransition";
 import Hud from "../components/court/Hud";
-import Ball from "../components/court/Ball";
-import Player from "../components/court/Player";
 import ServeTutorial from "../components/court/ServeTutorial";
 import OutCall from "../components/court/OutCall";
 import crowdAwwUrl from "../assets/crowd-aww.mp3";
@@ -19,6 +19,11 @@ import Contact from "../components/Contact";
 // behind the shot rather than a jump-scare on a quiet page.
 const SFX_VOLUME = 0.08;
 
+// How far the broadcast transition pushes in, as a multiple of the scene's
+// fitted (whole-court) zoom — absolute, so it lands the same however the
+// follow camera was framed when the ball landed.
+const TRANSITION_ZOOM = 3.4;
+
 const SECTION_COMPONENTS = {
   about: About,
   experience: Experience,
@@ -26,33 +31,41 @@ const SECTION_COMPONENTS = {
   contact: Contact,
 };
 
-// Ref callback that fires when the section overlay mounts. Under
-// AnimatePresence mode="wait" the new overlay mounts only AFTER the previous
-// one finishes exiting, so at this point the new heading is in the DOM. Moving
-// focus here (rather than in a useEffect keyed on the route) guarantees focus
-// lands on the incoming section, not the outgoing one. Module-level so its
-// identity is stable and it runs on mount/unmount only.
-const focusSectionHeading = (node) => {
-  if (!node) return;
-  const heading = node.querySelector("h2, h1");
+const focusHeading = (node) => {
+  const heading = node?.querySelector("h2, h1");
   if (heading) {
     heading.setAttribute("tabindex", "-1");
-    heading.focus();
+    heading.style.outline = "none"; // programmatic focus, not a keyboard tab stop
+    heading.focus({ preventScroll: true });
   }
 };
 
+// The court routes. `active` is what the URL says; `displayed` is what is on
+// screen — it lags behind so the broadcast transition can play out in reverse
+// after the URL has already gone back to "/".
 const CourtStage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const reduced = usePrefersReducedMotion();
+  const active = resolveActiveSection(location.pathname);
 
-  const MAX_PULL = 250; // tune: pull distance (court units) for full power
-
-  const [aim, setAim] = useState(null);
-  const [shot, setShot] = useState(null);
+  const [displayed, setDisplayed] = useState(active);
+  const [phase, setPhase] = useState(active ? "shown" : "idle"); // idle | entering | shown | exiting
+  const [scene, setScene] = useState(null);
   const [outCall, setOutCall] = useState(false);
   const [tutorial, setTutorial] = useState(false);
-  const frameRef = useRef(null);
+  // Decided once on mount: the cold-open plays over (and through) the canvas.
+  const [introPending, setIntroPending] = useState(shouldPlay);
+
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const instantRef = useRef(!!active); // the next build renders at progress(1)
+  const pendingRef = useRef(null);     // section to show once the current exit finishes
+  const tlRef = useRef(null);
+  const overlayRef = useRef(null);
+  const contentRef = useRef(null);
+  const cardRef = useRef(null);
+  const liveRef = useRef(null);
   const missAudioRef = useRef(null);
 
   const playMiss = () => {
@@ -66,36 +79,7 @@ const CourtStage = () => {
     a.play().catch(() => {});
   };
 
-  const toCourtCoords = (e) => {
-    const rect = frameRef.current.getBoundingClientRect();
-    return {
-      x: ((e.clientX - rect.left) / rect.width) * COURT.width,
-      y: ((e.clientY - rect.top) / rect.height) * COURT.height,
-    };
-  };
-
-  const onPointerDown = (e) => {
-    if (shot) return; // ignore while a ball is in flight
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    setAim({ pull: { x: 0, y: 0 }, power: 0 });
-  };
-  const onPointerMove = (e) => {
-    if (!aim) return;
-    const p = toCourtCoords(e);
-    const pull = { x: p.x - SERVE_ORIGIN.x, y: p.y - SERVE_ORIGIN.y };
-    setAim({ pull, power: Math.min(1, Math.hypot(pull.x, pull.y) / MAX_PULL) });
-  };
-  const onPointerUp = () => {
-    if (!aim) return;
-    const pull = aim.pull;
-    setAim(null);
-    if (Math.hypot(pull.x, pull.y) < 6) return; // a tap, not a drag — no launch
-    setShot(landingFromPull(SERVE_ORIGIN, pull, { power: 2.6, maxReach: 720 }));
-  };
-
-  const onLand = () => {
-    const result = classifyLanding(shot);
-    setShot(null);
+  const onLand = (result) => {
     if (result.type === "hit") {
       navigate(`/${result.sectionId}`);
     } else if (result.type === "out") {
@@ -108,83 +92,140 @@ const CourtStage = () => {
     }
   };
 
-  const active = resolveActiveSection(location.pathname);
-  const goTo = (id) => navigate(id ? `/${id}` : "/");
-
-  const liveRef = useRef(null);
+  // URL → displayed. Decides whether to enter, exit, swap or resume.
   useEffect(() => {
-    // Announce the section (timing-independent — reads from data, not the DOM).
-    // Focus is handled by the overlay's ref callback, which mounts at the right time.
-    if (active && liveRef.current) {
-      liveRef.current.textContent = `${active.label} section`;
+    const tl = tlRef.current;
+    if (active && !displayed) {
+      instantRef.current = false;
+      setDisplayed(active);
+    } else if (!active && displayed) {
+      if (tl) {
+        setPhase("exiting");
+        tl.timeScale(1.3).reverse();
+      } else {
+        setDisplayed(null);
+        setPhase("idle");
+      }
+    } else if (active && displayed && active.id !== displayed.id) {
+      pendingRef.current = active;
+      if (tl) {
+        setPhase("exiting");
+        tl.timeScale(1.6).reverse();
+      } else {
+        instantRef.current = false;
+        setDisplayed(active);
+      }
+    } else if (active && displayed && tl && tl.reversed()) {
+      // Came back to the same section while it was leaving.
+      pendingRef.current = null;
+      setPhase("entering");
+      tl.timeScale(1).play();
     }
-  }, [active]);
+  }, [active, displayed]);
 
-  // Reset scroll on every navigation so the section card always appears from the
-  // top, regardless of how far the previous view had been scrolled.
+  // displayed → timeline. Built once the hidden content is in the DOM.
+  useLayoutEffect(() => {
+    if (!displayed) return undefined;
+    const els = overlayRef.current?.getEls();
+    const content = contentRef.current;
+    const card = cardRef.current;
+    if (!els || !content || !card) return undefined;
+
+    const cam = scene?.cam ?? { x: 0, y: 0, zoom: 1 };
+    const focus = scene ? scene.focus(displayed.id) : { x: 0, y: 0 };
+    scene?.lockCamera(true);
+    const zoomTo = scene ? scene.state.fitZoom * TRANSITION_ZOOM : undefined;
+    const tl = buildTransition({ els, cam, focus, zoomTo, content, card, reduced });
+    tl.eventCallback("onComplete", () => {
+      setPhase("shown");
+      focusHeading(content);
+    });
+    tl.eventCallback("onReverseComplete", () => {
+      scene?.lockCamera(false);
+      scene?.setCameraMode("follow"); // ease back to the player rather than cut
+      const next = pendingRef.current;
+      pendingRef.current = null;
+      if (next) {
+        instantRef.current = false;
+        setDisplayed(next);
+      } else {
+        setDisplayed(null);
+        setPhase("idle");
+      }
+    });
+    tlRef.current = tl;
+
+    const instant = instantRef.current || reduced || phaseRef.current === "shown";
+    instantRef.current = false;
+    if (instant) {
+      tl.progress(1);
+      setPhase("shown");
+    } else {
+      setPhase("entering");
+      tl.play();
+    }
+    return () => {
+      tl.kill();
+      tlRef.current = null;
+    };
+  }, [displayed, scene, reduced]);
+
+  useEffect(() => {
+    if (displayed && liveRef.current) liveRef.current.textContent = `${displayed.label} section`;
+  }, [displayed]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const ActiveSection = active ? SECTION_COMPONENTS[active.id] : null;
-  // Transform-origin for the erupt: the active zone's centre, as % of the court.
-  const origin = active
-    ? `${(BOXES[active.box].cx / COURT.width) * 100}% ${(BOXES[active.box].cy / COURT.height) * 100}%`
-    : "50% 50%";
+  const goTo = (id) => navigate(id ? `/${id}` : "/");
+  const Displayed = displayed ? SECTION_COMPONENTS[displayed.id] : null;
 
   return (
-    <div className="relative min-h-screen court-turf overflow-hidden">
+    <div className="relative min-h-screen overflow-x-hidden">
       <p ref={liveRef} className="sr-only" role="status" aria-live="polite" />
-      {!active && (
-        <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-8 pt-16">
-          <div
-            ref={frameRef}
-            className="relative w-full touch-none select-none cursor-grab active:cursor-grabbing"
-            style={{ maxWidth: 960, aspectRatio: `${COURT.width} / ${COURT.height}` }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-          >
-            <Court active={null} onNavigate={() => {}} fill disabled />
-            <Player aim={aim} shot={shot} />
-            <Ball aim={aim} shot={shot} onLand={onLand} />
-            <OutCall show={outCall} />
+
+      <IsoCourt
+        onReady={setScene}
+        onLand={onLand}
+        intro={introPending}
+        inputEnabled={!displayed && !tutorial && !introPending}
+      />
+      {introPending && <ColdOpen scene={scene} onDone={() => setIntroPending(false)} />}
+
+      <div className="fixed inset-0 z-30 pointer-events-none">
+        <OutCall show={outCall} />
+      </div>
+
+      <BroadcastTransition ref={overlayRef} section={displayed} />
+
+      {Displayed && (
+        <div ref={contentRef} className="relative z-20" style={{ visibility: "hidden", opacity: 0 }}>
+          <div ref={cardRef} className="py-24">
+            <Displayed />
           </div>
-          <p className="mt-6 font-mono text-cream/50 text-[0.7rem] uppercase tracking-widest text-center">
-            Drag the ball back to aim — launch it into a zone
-          </p>
-          <p className="sr-only">
-            Drag the ball to aim and launch it into a zone, or use the menu to jump to a section.
-          </p>
         </div>
       )}
 
-      <AnimatePresence mode="wait">
-        {ActiveSection && (
+      {displayed && phase === "shown" && (
+        <>
+          {/* Always-visible way back, pinned top-right above the Hud. */}
           <motion.div
-            key={active.id}
-            ref={focusSectionHeading}
-            initial={reduced ? false : { opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
-            transition={reduced ? { duration: 0 } : { duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            style={{ transformOrigin: origin }}
-            className="py-24"
+            initial={reduced ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.3, ease: "easeOut" }}
+            className="fixed top-[4.5rem] right-4 z-40"
           >
-            <ActiveSection />
-            <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 mt-6">
-              <Link
-                to="/"
-                className="font-mono text-xs uppercase tracking-widest text-cream hover:text-ball transition-colors"
-              >
-                &larr; Back to court
-              </Link>
-            </div>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-full bg-ball text-charcoal font-mono text-label font-semibold uppercase tracking-eyebrow px-4 py-2 shadow-lg shadow-black/30 hover:bg-cream transition-colors"
+            >
+              &larr; Back to court
+            </Link>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {active && <Hud active={active} onNavigate={goTo} />}
+          <Hud active={displayed} onNavigate={goTo} />
+        </>
+      )}
       <ServeTutorial open={tutorial} onClose={() => setTutorial(false)} />
     </div>
   );

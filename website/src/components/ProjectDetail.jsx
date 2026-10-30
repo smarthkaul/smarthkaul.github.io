@@ -10,14 +10,14 @@ import ActionLink from "./broadcast/ActionLink";
 
 const DetailSection = ({ section }) => (
   <div className="mb-8">
-    <h3 className="font-display font-bold text-charcoal text-xl mb-3">
+    <h3 className="font-display font-bold text-charcoal text-xl sm:text-2xl tracking-display leading-tight mb-3">
       {section.heading}
     </h3>
     {section.body && (
-      <p className="text-charcoal/70 leading-relaxed">{section.body}</p>
+      <p className="text-charcoal/75 leading-relaxed">{section.body}</p>
     )}
     {section.items && (
-      <ol className="list-decimal pl-5 space-y-3 text-charcoal/70 leading-relaxed">
+      <ol className="list-decimal pl-5 space-y-3 text-charcoal/75 leading-relaxed">
         {section.items.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -47,7 +47,7 @@ const ProjectDetail = ({ slug }) => {
         >
           {/* Collaborative projects say so up front, before any claim is made. */}
           {project.team && (
-            <p className="font-mono text-xs uppercase tracking-widest text-charcoal/50 border-b border-charcoal/10 pb-4 mb-6">
+            <p className="font-mono text-label uppercase tracking-eyebrow text-charcoal/55 border-b border-charcoal/10 pb-4 mb-6">
               {project.team}
             </p>
           )}
@@ -68,7 +68,7 @@ const ProjectDetail = ({ slug }) => {
           {detail.results && <StatList items={detail.results} className="mb-4" />}
 
           {detail.resultsNote && (
-            <p className="text-charcoal/70 text-sm leading-relaxed mb-8">
+            <p className="text-charcoal/75 text-[0.9375rem] leading-relaxed mb-8">
               {detail.resultsNote}
             </p>
           )}

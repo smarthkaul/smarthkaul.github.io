@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import headUrl from "../../assets/player/head.png";
-import bodyUrl from "../../assets/player/body.png";
-import leftArmUrl from "../../assets/player/left-arm.png";
-import rightArmUrl from "../../assets/player/right-arm.png";
 import introThemeUrl from "../../assets/intro-theme.m4a";
 import headshotUrl from "../../assets/headshot.jpg";
+
+// The first-visit cold-open. The name bumper and the player card are DOM on
+// a solid turf overlay; then the card shrinks away, the overlay's background
+// fades to transparent, and the live isometric canvas underneath (CourtStage
+// built it with intro on) draws the court in and walks the player to his
+// spot — scene.intro(). He arrives, onDone fires, the overlay goes.
 
 const SEEN_KEY = "coldOpenSeen";
 const THEME_VOLUME = 0.2;
@@ -19,18 +21,9 @@ const TAPE = [
   { k: "Form", v: "Statistics @ UofT" },
 ];
 
-// Player home position in the court viewBox — mirrors Player.jsx.
-const P = {
-  leftArm: { x: 73, y: 157, w: 17, h: 40 },
-  body: { x: 85, y: 148, w: 30, h: 72 },
-  head: { x: 76, y: 95, w: 46, h: 56 },
-  rightArm: { x: 109, y: 155, w: 17, h: 42 },
-};
-const RK = { cx: P.rightArm.x + P.rightArm.w / 2 + 11, cy: P.rightArm.y + P.rightArm.h + 4, rx: 8, ry: 11 };
-
 // Play only on the landing, once per visitor, never under reduced motion.
 // `?intro` in the URL forces a replay (for tuning).
-function shouldPlay() {
+export function shouldPlay() {
   if (typeof window === "undefined") return false;
   const params = new URLSearchParams(window.location.search);
   if (params.has("intro")) return true;
@@ -44,13 +37,19 @@ function shouldPlay() {
   return true;
 }
 
-const ColdOpen = () => {
-  const [play] = useState(shouldPlay);
-  const [done, setDone] = useState(!play);
+const ColdOpen = ({ scene = null, onDone }) => {
+  const [done, setDone] = useState(false);
   const rootRef = useRef(null);
   const tlRef = useRef(null);
+  const ctxRef = useRef(null);
   const audioRef = useRef(null);
   const finishedRef = useRef(false);
+  // The scene can arrive a few frames after the overlay mounts (and is
+  // rebuilt under StrictMode), so the timeline reads the latest one from here.
+  const sceneRef = useRef(scene);
+  sceneRef.current = scene;
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   const finish = () => {
     if (finishedRef.current) return;
@@ -75,6 +74,28 @@ const ColdOpen = () => {
       });
     }
     setDone(true);
+    onDoneRef.current?.();
+  };
+
+  const skip = () => {
+    sceneRef.current?.skipIntro();
+    finish();
+  };
+
+  // Hands over to the canvas. No scene yet (it should long exist by now) →
+  // finish anyway; CourtStage then puts the scene in its final state.
+  const startCourt = () => {
+    const s = sceneRef.current;
+    if (!s) {
+      finish();
+      return;
+    }
+    // ignore(): this runs inside a timeline callback, so without it GSAP
+    // would file the scene's reveal tween under our context, and ctx.revert()
+    // on unmount would rewind the court to undrawn.
+    const run = () => s.intro({ onDone: finish });
+    if (ctxRef.current) ctxRef.current.ignore(run);
+    else run();
   };
 
   // The theme and the timeline are owned by ONE effect so there is exactly one
@@ -89,14 +110,12 @@ const ColdOpen = () => {
 
     const ctx = gsap.context(() => {
       gsap.set(".co-bumper-ball", { y: -70 });
-      // Entry offset from his home spot. y is capped at -80: his head sits at
-      // y=95 in the court viewBox, so anything past about -90 pushes it above
-      // the viewBox top edge and the SVG clips it off.
-      gsap.set(".co-player", { opacity: 0, x: 290, y: -80 });
 
       // Built paused: the show is released below, once we know whether the
-      // theme can play, so music and first frame begin on the same beat.
-      const tl = gsap.timeline({ paused: true, onComplete: finish });
+      // theme can play, so music and first frame begin on the same beat. The
+      // timeline ends once the overlay is see-through; finish() waits for the
+      // scene's walk-in to complete.
+      const tl = gsap.timeline({ paused: true });
       tlRef.current = tl;
 
       // 1 · Bumper — "Smarth Kaul" + the ball bouncing 3 times
@@ -112,34 +131,14 @@ const ColdOpen = () => {
         .from(".co-tape-row", { opacity: 0, x: -14, stagger: 0.08, duration: 0.3 }, "-=0.15")
         .to({}, { duration: 2 });
 
-      // 3 · Card transitions away as the court builds itself
-      tl.set(".co-court-scene", { opacity: 1 })
+      // 3 · Card shrinks away and the turf goes see-through: the live canvas
+      // underneath draws the court in, then walks the player on (scene.intro).
+      tl.add(startCourt)
         .to(".co-card", { scale: 0.35, opacity: 0, yPercent: -35, duration: 0.7, ease: "power2.inOut" }, "<")
-        .set(".co-card-scene", { opacity: 0 })
-        .from(".co-grass", { opacity: 0, duration: 0.4 }, "<0.15")
-        .fromTo(".co-line", { strokeDashoffset: 720 }, { strokeDashoffset: 0, stagger: 0.05, duration: 0.7, ease: "power1.inOut" }, "<");
-
-      // 4 · Player enters top-centre and waddle-walks AROUND the court to his
-      // baseline spot: first left along the top, then down the left side.
-      // Two separate keyframes (not a diagonal) so he skirts the court, and a
-      // beat at the corner where he turns.
-      tl.to(".co-player", { opacity: 1, duration: 0.2 })
-        .to(
-          ".co-player",
-          {
-            keyframes: [
-              { x: 0, duration: 1.5, ease: "none" },
-              { x: 0, duration: 0.25 }, // pause + turn at the corner
-              { y: 0, duration: 1.4, ease: "none" },
-            ],
-          },
-          "<"
-        )
-        .to(".co-player", { rotation: 4, transformOrigin: "50% 95%", duration: 0.24, yoyo: true, repeat: 12, ease: "sine.inOut" }, "<");
-
-      // 5 · Hand off to the live court
-      tl.to(".co-court-scene", { opacity: 0, duration: 0.5, ease: "power2.in" }, "+=0.3");
+        .to(".co-bg", { opacity: 0, duration: 0.8, ease: "power1.inOut" }, "<0.15")
+        .set(".co-card-scene", { opacity: 0 });
     }, rootRef);
+    ctxRef.current = ctx;
 
     // Release the show as soon as the play() promise settles — resolved (music
     // is running) or rejected (browser blocked autoplay, so it plays silent).
@@ -154,8 +153,11 @@ const ColdOpen = () => {
     return () => {
       cancelled = true;
       clearTimeout(guard);
-      audio.pause();
+      // CourtStage unmounts us the moment finish() runs: leave the theme to
+      // its fade-out tween then, and only cut it on an early unmount.
+      if (!finishedRef.current) audio.pause();
       ctx.revert();
+      ctxRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -163,14 +165,9 @@ const ColdOpen = () => {
   if (done) return null;
 
   return (
-    <div ref={rootRef} className="fixed inset-0 z-[100] court-turf overflow-hidden">
-      <button
-        type="button"
-        onClick={finish}
-        className="absolute top-4 right-4 z-20 font-mono text-cream/80 hover:text-ball text-xs uppercase tracking-widest"
-      >
-        Skip &#9656;
-      </button>
+    <div ref={rootRef} className="fixed inset-0 z-[100] overflow-hidden">
+      {/* Solid turf for the bumper and card; fades out to reveal the canvas. */}
+      <div className="co-bg absolute inset-0 court-turf" aria-hidden="true" />
 
       {/* 1 · Bumper */}
       <div className="co-bumper absolute inset-0 flex flex-col items-center justify-center gap-6">
@@ -215,46 +212,15 @@ const ColdOpen = () => {
         </div>
       </div>
 
-      {/* 3–4 · Court builds + player walks in (matches the live court, viewBox 780×360) */}
-      <div className="co-court-scene absolute inset-0 flex items-center justify-center px-4 pt-16" style={{ opacity: 0 }}>
-        <div className="relative w-full" style={{ maxWidth: 960, aspectRatio: "780 / 360" }}>
-          <svg viewBox="0 0 780 360" className="absolute inset-0 w-full h-full" aria-hidden="true">
-            <rect className="co-grass" x="140" y="20" width="500" height="320" rx="6" fill="#276e3c" />
-            <g fill="none" stroke="#ffffff" strokeWidth="3" strokeDasharray="720">
-              <line className="co-line" x1="140" y1="20" x2="640" y2="20" />
-              <line className="co-line" x1="140" y1="340" x2="640" y2="340" />
-              <line className="co-line" x1="140" y1="20" x2="140" y2="340" />
-              <line className="co-line" x1="640" y1="20" x2="640" y2="340" />
-              <line className="co-line" x1="140" y1="60" x2="640" y2="60" />
-              <line className="co-line" x1="140" y1="300" x2="640" y2="300" />
-              <line className="co-line" x1="265" y1="60" x2="265" y2="300" />
-              <line className="co-line" x1="515" y1="60" x2="515" y2="300" />
-              <line className="co-line" x1="265" y1="180" x2="515" y2="180" />
-            </g>
-            <line className="co-line" x1="390" y1="20" x2="390" y2="340" stroke="#f4f1e9" strokeWidth="4" strokeDasharray="720" />
-
-            {/* player (assembled parts, walked in) */}
-            <g className="co-player">
-              <image href={rightArmUrl} x={P.leftArm.x} y={P.leftArm.y} width={P.leftArm.w} height={P.leftArm.h} />
-              <image href={bodyUrl} x={P.body.x} y={P.body.y} width={P.body.w} height={P.body.h} />
-              <image href={headUrl} x={P.head.x} y={P.head.y} width={P.head.w} height={P.head.h} />
-              <g>
-                <image href={leftArmUrl} x={P.rightArm.x} y={P.rightArm.y} width={P.rightArm.w} height={P.rightArm.h} />
-                <line x1={P.rightArm.x + P.rightArm.w / 2} y1={P.rightArm.y + P.rightArm.h - 6} x2={RK.cx - 4} y2={RK.cy + 7} stroke="#d6f84c" strokeWidth="3" strokeLinecap="round" />
-                <ellipse cx={RK.cx} cy={RK.cy} rx={RK.rx} ry={RK.ry} fill="none" stroke="#d6f84c" strokeWidth="2.5" />
-                <g stroke="#d6f84c" strokeWidth="0.7" opacity="0.65">
-                  <line x1={RK.cx - 4} y1={RK.cy - 9} x2={RK.cx - 4} y2={RK.cy + 9} />
-                  <line x1={RK.cx} y1={RK.cy - 10} x2={RK.cx} y2={RK.cy + 10} />
-                  <line x1={RK.cx + 4} y1={RK.cy - 9} x2={RK.cx + 4} y2={RK.cy + 9} />
-                  <line x1={RK.cx - 6} y1={RK.cy - 5} x2={RK.cx + 6} y2={RK.cy - 5} />
-                  <line x1={RK.cx - 7} y1={RK.cy} x2={RK.cx + 7} y2={RK.cy} />
-                  <line x1={RK.cx - 6} y1={RK.cy + 5} x2={RK.cx + 6} y2={RK.cy + 5} />
-                </g>
-              </g>
-            </g>
-          </svg>
-        </div>
-      </div>
+      {/* Skip sits in its own layer, never faded, until the intro ends. */}
+      <button
+        type="button"
+        onClick={skip}
+        className="absolute bottom-6 right-6 z-20 font-mono text-cream/80 hover:text-ball text-xs uppercase tracking-widest text-shadow-broadcast"
+        style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
+      >
+        Skip &#9656;
+      </button>
     </div>
   );
 };

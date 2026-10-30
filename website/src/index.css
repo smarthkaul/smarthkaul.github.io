@@ -30,6 +30,11 @@ body {
   );
 }
 
+/* Legibility for backgroundless chrome (Navbar, Footer) floating over the court */
+.text-shadow-broadcast {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
 /* Court zone breathing pulse */
 @keyframes zonePulse {
   0%, 100% { opacity: 0.85; }

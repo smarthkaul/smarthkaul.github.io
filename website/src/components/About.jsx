@@ -38,17 +38,17 @@ const About = () => {
               height="800"
               className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover shrink-0 ring-4 ring-ball/70 shadow-md"
             />
-            <p className="text-charcoal text-xl sm:text-2xl font-light leading-relaxed">
+            <p className="text-charcoal text-xl sm:text-2xl font-medium tracking-tight leading-snug">
               I&apos;m a 2026 Statistics graduate of the University of Toronto, out of the
               Statistical Machine Learning and Data Mining specialist program.
             </p>
           </div>
-          <p className="text-charcoal/70 text-base leading-relaxed mb-4">
+          <p className="text-charcoal/75 text-base leading-relaxed mb-4">
             I like building products that solve real problems, and I like doing that
             through technology and data. The part I enjoy most is digging into the numbers
             until they say something useful about what to build next.
           </p>
-          <p className="text-charcoal/70 text-base leading-relaxed mb-8">
+          <p className="text-charcoal/75 text-base leading-relaxed mb-8">
             Outside of work I play and watch a lot of tennis, I&apos;m learning the guitar,
             and I&apos;ll happily drive out to the cinema to catch the latest movie.
           </p>

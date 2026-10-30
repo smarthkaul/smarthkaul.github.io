@@ -1,23 +1,36 @@
 import { Link } from "react-router-dom";
 import SectionMenu from "./court/SectionMenu";
 
-const iconClass = "text-cream/60 hover:text-ball transition-colors duration-200";
+const iconClass =
+  "text-cream/75 hover:text-ball focus-visible:text-ball transition-colors duration-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
 
 // Icon glyphs and the gap between them are sized together: the social cluster is
 // the only thing balancing the "SK" mark across the bar, so it needs visual weight.
-const svgClass = "w-6 h-6";
+const svgClass = "w-5 h-5";
 
+// No bar: the chrome floats over the court like a broadcast overlay. The scrim
+// behind it is a short charcoal fade (taller than the 56px bar, never clickable)
+// so the cream marks stay legible over grass and over a card scrolling beneath.
+// The bar itself stays h-14 — IsoCourt assumes a 56px top inset.
 const Navbar = () => (
-  <header className="fixed top-0 left-0 right-0 z-50 bg-wimbledon/80 backdrop-blur-md border-b border-wimbledon-dark">
-    <nav className="flex items-center justify-between h-14 px-6 sm:px-10">
+  <header className="fixed top-0 left-0 right-0 z-50">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-charcoal/55 via-charcoal/20 to-transparent"
+    />
+    <nav className="relative flex items-center justify-between h-14 px-6 sm:px-10">
       <Link
         to="/"
-        className="font-display font-bold text-cream text-lg tracking-tight hover:text-ball transition-colors"
+        aria-label="Smarth Kaul, home"
+        className="group flex items-center gap-2 text-shadow-broadcast"
       >
-        SK
+        <span className="font-display font-extrabold text-cream text-xl tracking-display leading-none group-hover:text-ball transition-colors">
+          SK
+        </span>
+        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-ball" />
       </Link>
 
-      <div className="flex items-center gap-6 sm:gap-8">
+      <div className="flex items-center gap-5 sm:gap-7">
         <a
           href="https://github.com/smarthkaul"
           aria-label="GitHub"
