@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { resolveActiveSection } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import IsoCourt from "../components/iso/IsoCourt";
@@ -202,19 +203,29 @@ const CourtStage = () => {
         <div ref={contentRef} className="relative z-20" style={{ visibility: "hidden", opacity: 0 }}>
           <div ref={cardRef} className="py-24">
             <Displayed />
-            <div className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-24 mt-6">
-              <Link
-                to="/"
-                className="font-mono text-xs uppercase tracking-widest text-cream hover:text-ball transition-colors"
-              >
-                &larr; Back to court
-              </Link>
-            </div>
           </div>
         </div>
       )}
 
-      {displayed && phase === "shown" && <Hud active={displayed} onNavigate={goTo} />}
+      {displayed && phase === "shown" && (
+        <>
+          {/* Always-visible way back, pinned top-right above the Hud. */}
+          <motion.div
+            initial={reduced ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.3, ease: "easeOut" }}
+            className="fixed top-[4.5rem] right-4 z-40"
+          >
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-full bg-ball text-charcoal font-mono text-label font-semibold uppercase tracking-eyebrow px-4 py-2 shadow-lg shadow-black/30 hover:bg-cream transition-colors"
+            >
+              &larr; Back to court
+            </Link>
+          </motion.div>
+          <Hud active={displayed} onNavigate={goTo} />
+        </>
+      )}
       <ServeTutorial open={tutorial} onClose={() => setTutorial(false)} />
     </div>
   );
