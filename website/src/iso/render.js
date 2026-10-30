@@ -16,6 +16,26 @@ export const STRIPE_EXTENT = 60; // metres either side of the court centre
 export const LABEL_FADE_START = 1.15;
 export const LABEL_FADE_END = 1.6;
 
+// Court build-in (scene.reveal, 0..1 — the cold-open). The surface fades in
+// over [0, REVEAL_SURFACE_END]; line i draws from 0 to full length across its
+// own window of REVEAL_LINE_SPAN, the windows staggered evenly between
+// REVEAL_LINES_START and REVEAL_LINES_END; the net, targets and labels fade
+// in from REVEAL_DRESS_START to 1.
+export const REVEAL_SURFACE_END = 0.3;
+export const REVEAL_LINES_START = 0.1;
+export const REVEAL_LINES_END = 0.75;
+export const REVEAL_LINE_SPAN = 0.22;
+export const REVEAL_DRESS_START = 0.6;
+
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const revealOf = (scene) => scene.reveal ?? 1;
+export const surfaceAlpha = (reveal) => clamp01(reveal / REVEAL_SURFACE_END);
+export const dressAlpha = (reveal) => clamp01((reveal - REVEAL_DRESS_START) / (1 - REVEAL_DRESS_START));
+export function lineProgress(reveal, i, n = LINES.length) {
+  const stagger = n > 1 ? (REVEAL_LINES_END - REVEAL_LINE_SPAN - REVEAL_LINES_START) / (n - 1) : 0;
+  return clamp01((reveal - (REVEAL_LINES_START + i * stagger)) / REVEAL_LINE_SPAN);
+}
+
 // Total height of the figure's feet off the ground, in metres.
 export const playerHeight = (rig) => rig.bob + rig.hop + (rig.z ?? 0);
 
@@ -72,19 +92,28 @@ function drawTurf(ctx, scene, viewport) {
 function drawCourt(ctx, scene, viewport) {
   const L = COURT_M.halfLength;
   const W = COURT_M.halfWidth;
-  ctx.fillStyle = COLORS.court;
-  groundPoly(ctx, scene, viewport, [[-L, -W], [L, -W], [L, W], [-L, W]]);
-  ctx.fill();
+  const reveal = revealOf(scene);
+  const surface = surfaceAlpha(reveal);
+  if (surface > 0) {
+    ctx.save();
+    ctx.globalAlpha = surface;
+    ctx.fillStyle = COLORS.court;
+    groundPoly(ctx, scene, viewport, [[-L, -W], [L, -W], [L, W], [-L, W]]);
+    ctx.fill();
+    ctx.restore();
+  }
   ctx.strokeStyle = COLORS.line;
   ctx.lineWidth = px(0.1, scene.cam.zoom);
   ctx.lineCap = "round";
   ctx.beginPath();
-  for (const [u1, v1, u2, v2] of LINES) {
+  LINES.forEach(([u1, v1, u2, v2], i) => {
+    const k = lineProgress(reveal, i);
+    if (k <= 0) return;
     const a = toScreen(scene, viewport, u1, v1);
-    const b = toScreen(scene, viewport, u2, v2);
+    const b = toScreen(scene, viewport, u1 + (u2 - u1) * k, v1 + (v2 - v1) * k);
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
-  }
+  });
   ctx.stroke();
 }
 
@@ -379,7 +408,7 @@ function drawLabels(ctx, scene, viewport) {
   const alpha = Math.max(0, Math.min(1, 1 - (zoomRatio - LABEL_FADE_START) / (LABEL_FADE_END - LABEL_FADE_START)));
   if (alpha <= 0) return;
   ctx.save();
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha *= alpha;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.shadowColor = "rgba(0,0,0,0.6)";
@@ -398,19 +427,32 @@ function drawLabels(ctx, scene, viewport) {
   ctx.restore();
 }
 
+// Runs draw() at globalAlpha × alpha; skips it entirely at 0.
+function faded(ctx, alpha, draw) {
+  if (alpha <= 0) return;
+  if (alpha >= 1) { draw(); return; }
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  draw();
+  ctx.restore();
+}
+
 export function renderScene(ctx, scene, viewport, images = {}) {
+  const dress = dressAlpha(revealOf(scene));
+  const playerVisible = scene.player.visible !== false;
+  const inHand = scene.ball.phase === "hand" || scene.ball.phase === "toss";
   drawTurf(ctx, scene, viewport);
   drawCourt(ctx, scene, viewport);
-  drawTargets(ctx, scene, viewport);
-  drawShadow(ctx, scene, viewport, scene.player.u, scene.player.v, scene.player.rig.hop + (scene.player.rig.z ?? 0), 0.9);
-  drawBallShadow(ctx, scene, viewport);
+  faded(ctx, dress, () => drawTargets(ctx, scene, viewport));
+  if (playerVisible) drawShadow(ctx, scene, viewport, scene.player.u, scene.player.v, scene.player.rig.hop + (scene.player.rig.z ?? 0), 0.9);
+  if (playerVisible || !inHand) drawBallShadow(ctx, scene, viewport);
   drawReticle(ctx, scene, viewport);
-  const ballFar = scene.ball.phase !== "hand" && scene.ball.phase !== "toss" && scene.ball.u > 0;
+  const ballFar = !inHand && scene.ball.u > 0;
   if (ballFar) drawBall(ctx, scene, viewport);
-  drawNet(ctx, scene, viewport);
-  drawPlayer(ctx, scene, viewport, images);
-  if (!ballFar) drawBall(ctx, scene, viewport);
+  faded(ctx, dress, () => drawNet(ctx, scene, viewport));
+  if (playerVisible) drawPlayer(ctx, scene, viewport, images);
+  if (!ballFar && (playerVisible || !inHand)) drawBall(ctx, scene, viewport);
   drawTrail(ctx, scene, viewport);
   drawEffects(ctx, scene, viewport);
-  drawLabels(ctx, scene, viewport);
+  faded(ctx, dress, () => drawLabels(ctx, scene, viewport));
 }

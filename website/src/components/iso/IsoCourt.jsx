@@ -28,7 +28,11 @@ const loadImage = (src) =>
 
 const isTypingTarget = (el) => !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
 
-const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true }) => {
+// `intro` is read once, when the scene is built: it starts the scene in the
+// cold-open state (court undrawn, player hidden, overview camera) for
+// ColdOpen to run with scene.intro(). When it turns false the scene is sent
+// to its final state, which is a no-op if the intro already finished.
+const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true, intro = false }) => {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const reduced = usePrefersReducedMotion();
@@ -42,6 +46,8 @@ const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true }) => {
   callbacks.current = { onReady, onLand, onServe };
   const inputRef = useRef(inputEnabled);
   inputRef.current = inputEnabled;
+  const introRef = useRef(intro);
+  introRef.current = intro;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,6 +56,7 @@ const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true }) => {
       canvas,
       reduced,
       topInset: TOP_INSET,
+      intro: introRef.current,
       onLand: (result, point) => callbacks.current.onLand?.(result, point),
       onServe: () => {
         setHintVisible(false);
@@ -106,6 +113,10 @@ const IsoCourt = ({ onReady, onLand, onServe, inputEnabled = true }) => {
   useEffect(() => {
     sceneRef.current?.setInputEnabled(inputEnabled);
   }, [inputEnabled]);
+
+  useEffect(() => {
+    if (!intro) sceneRef.current?.skipIntro?.();
+  }, [intro]);
 
   const toLocal = (e) => {
     const r = canvasRef.current.getBoundingClientRect();

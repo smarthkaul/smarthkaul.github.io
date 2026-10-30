@@ -21,10 +21,18 @@ const TRAIL_LENGTH = 18;
 const DUST_COUNT = 7;
 const ARRIVE_RADIUS = 0.15; // metres — walkTo() counts this as arrived
 
+// Cold-open (scene.intro). The court draws itself in over REVEAL_DURATION
+// seconds on the static whole-scene camera, then the player walks in from
+// INTRO_ENTRY — off the left edge of the frame, behind the near baseline so he
+// skirts the court — to SPAWN while the follow camera cranes in onto him.
+export const REVEAL_DURATION = 2.6;
+export const INTRO_ENTRY = { u: SPAWN.u - 4, v: SPAWN.v - 16 };
+export const INTRO_WALK_SPEED = 0.6; // × WALK_SPEED
+
 export { FOLLOW_ZOOM, BALL_ZOOM, PAN_RATE, ZOOM_RATE, LOOK_AHEAD, BALL_HOLD } from "./projection";
 export const CAMERA_MODES = ["follow", "ball", "fit"];
 
-export function createScene({ canvas, images = {}, reduced = false, topInset = 0, onLand, onServe }) {
+export function createScene({ canvas, images = {}, reduced = false, topInset = 0, intro = false, onLand, onServe }) {
   const ctx = canvas.getContext ? canvas.getContext("2d") : null;
   const viewport = { width: canvas.clientWidth || 1, height: canvas.clientHeight || 1 };
   let dpr = 1;
@@ -32,10 +40,11 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
 
   const state = {
     cam: { x: 0, y: 0, zoom: 1 },
-    camMode: "follow",   // 'follow' (player) | 'ball' (served ball) | 'fit' (whole scene, static)
+    camMode: intro ? "fit" : "follow", // 'follow' (player) | 'ball' (served ball) | 'fit' (whole scene, static)
     fitZoom: 1,
     t: 0,
-    player: { u: SPAWN.u, v: SPAWN.v, rig: createRig() },
+    reveal: intro ? 0 : 1, // court build-in progress, 0..1 (render.js)
+    player: { u: SPAWN.u, v: SPAWN.v, visible: !intro, rig: createRig() },
     ball: { phase: "hand", u: SPAWN.u, v: SPAWN.v, z: 0, vu: 0, vv: 0, vz: 0, scaleX: 1, scaleY: 1, alpha: 1, trail: [] },
     aim: null,
     targets: Object.fromEntries(SECTIONS.map((s) => [s.id, { flash: 0, pop: 1 }])),
@@ -49,7 +58,9 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   let autoWalk = null;    // { u, v } tap target to walk toward, then serve
   let script = null;      // { u, v, onArrive, speed } walkTo() target — no serve, no clamp
   let stuckTime = 0;
-  let inputEnabled = true;
+  let inputEnabled = !intro;
+  let introPhase = intro ? "pending" : "done"; // pending | running | done
+  let introTween = null;
   let camLocked = false;
   let running = false;
   let hidden = false;
@@ -454,6 +465,54 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     if (state.ball.phase === "hand") { state.ball.u = u; state.ball.v = v; }
   };
 
+  // --- cold-open ---
+  // Final state of the intro: court fully drawn, player at the spawn, the
+  // follow camera on him. Input stays as it is — CourtStage owns that.
+  const settleIntro = () => {
+    introPhase = "done";
+    introTween?.kill();
+    introTween = null;
+    script = null;
+    state.reveal = 1;
+    state.player.visible = true;
+    placePlayer(SPAWN);
+    setCameraMode("follow");
+    snapCamera();
+  };
+
+  // Court build-in, then the walk-in. onDone fires once he reaches SPAWN.
+  // Under reduced motion it lands on the final state at once.
+  const playIntro = ({ onDone } = {}) => {
+    if (introPhase !== "pending") {
+      if (introPhase === "done") onDone?.();
+      return;
+    }
+    if (reduced) {
+      settleIntro();
+      onDone?.();
+      return;
+    }
+    introPhase = "running";
+    const walkIn = () => {
+      introTween = null;
+      placePlayer(INTRO_ENTRY);
+      state.player.visible = true;
+      setCameraMode("follow");
+      walkTo(SPAWN, () => {
+        introPhase = "done";
+        onDone?.();
+      }, { speed: INTRO_WALK_SPEED });
+    };
+    introTween = track(gsap.to(state, { reveal: 1, duration: REVEAL_DURATION, ease: "none", onComplete: walkIn }));
+  };
+
+  // Skip: jump straight to the final state. A no-op once the intro is done,
+  // so it is always safe to call. Never calls intro()'s onDone.
+  const skipIntro = () => {
+    if (introPhase === "done") return;
+    settleIntro();
+  };
+
   computeFit();
   snapCamera();
 
@@ -467,5 +526,6 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
     setImages: (next) => { imgs = next; },
     setPointer, clearPointer, setKey, clearKeys, setInputEnabled,
     serve, tap, step, jump, walkTo, placePlayer,
+    intro: playIntro, skipIntro,
   };
 }

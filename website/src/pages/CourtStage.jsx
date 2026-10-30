@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import { resolveActiveSection } from "../data/sections";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import IsoCourt from "../components/iso/IsoCourt";
+import ColdOpen, { shouldPlay } from "../components/iso/ColdOpen";
 import BroadcastTransition, { buildTransition } from "../components/iso/BroadcastTransition";
 import Hud from "../components/court/Hud";
 import ServeTutorial from "../components/court/ServeTutorial";
@@ -52,6 +53,8 @@ const CourtStage = () => {
   const [scene, setScene] = useState(null);
   const [outCall, setOutCall] = useState(false);
   const [tutorial, setTutorial] = useState(false);
+  // Decided once on mount: the cold-open plays over (and through) the canvas.
+  const [introPending, setIntroPending] = useState(shouldPlay);
 
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
@@ -181,7 +184,13 @@ const CourtStage = () => {
     <div className="relative min-h-screen overflow-x-hidden">
       <p ref={liveRef} className="sr-only" role="status" aria-live="polite" />
 
-      <IsoCourt onReady={setScene} onLand={onLand} inputEnabled={!displayed && !tutorial} />
+      <IsoCourt
+        onReady={setScene}
+        onLand={onLand}
+        intro={introPending}
+        inputEnabled={!displayed && !tutorial && !introPending}
+      />
+      {introPending && <ColdOpen scene={scene} onDone={() => setIntroPending(false)} />}
 
       <div className="fixed inset-0 z-30 pointer-events-none">
         <OutCall show={outCall} />

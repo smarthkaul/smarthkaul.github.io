@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import gsap from "gsap";
-import { createScene, FOLLOW_ZOOM, BALL_ZOOM } from "./scene";
+import { createScene, FOLLOW_ZOOM, BALL_ZOOM, INTRO_ENTRY, REVEAL_DURATION } from "./scene";
 import { project, worldToScreen } from "./projection";
 import { SPAWN, PLAYER_BOUNDS, AIM_RANGE, targetCenter } from "./court";
 import { JUMP_HEIGHT } from "./rig";
@@ -301,5 +301,111 @@ describe("scene", () => {
     expect(scene.state.ripples).toHaveLength(0);
     expect(scene.serve()).toBe(true);
     scene.destroy();
+  });
+
+  describe("intro", () => {
+    const expectFinal = (scene) => {
+      expect(scene.state.reveal).toBe(1);
+      expect(scene.state.player.visible).toBe(true);
+      expect(scene.state.player.u).toBeCloseTo(SPAWN.u, 0);
+      expect(scene.state.player.v).toBeCloseTo(SPAWN.v, 0);
+      expect(scene.state.camMode).toBe("follow");
+    };
+
+    it("intro: true starts unrevealed, player hidden, on the fit camera, input off", () => {
+      const { scene } = make({ intro: true });
+      expect(scene.state.reveal).toBe(0);
+      expect(scene.state.player.visible).toBe(false);
+      expect(scene.state.camMode).toBe("fit");
+      expect(scene.cam.zoom).toBeCloseTo(scene.state.fitZoom);
+      expect(scene.jump()).toBe(false);
+      scene.setPointer(screenOf(scene, 3, -2));
+      scene.step(1 / 60);
+      expect(scene.serve()).toBe(false);
+    });
+
+    it("without the option the court is fully revealed and the player visible", () => {
+      const { scene } = make();
+      expect(scene.state.reveal).toBe(1);
+      expect(scene.state.player.visible).toBe(true);
+    });
+
+    it("intro() under reduced motion lands on the final state and calls onDone", () => {
+      const { scene } = make({ intro: true, reduced: true });
+      const onDone = vi.fn();
+      scene.intro({ onDone });
+      expectFinal(scene);
+      expect(scene.cam.zoom).toBeCloseTo(scene.state.fitZoom * FOLLOW_ZOOM);
+      expect(onDone).toHaveBeenCalledTimes(1);
+    });
+
+    it("intro() with full motion reveals the court, then walks the player in from off-court and calls onDone", () => {
+      const { scene } = make({ intro: true, reduced: false });
+      const onDone = vi.fn();
+      scene.intro({ onDone });
+      // Drive the reveal tween by hand: it runs on GSAP's clock, not step().
+      gsap.getTweensOf(scene.state)[0].progress(0.5);
+      expect(scene.state.reveal).toBeCloseTo(0.5);
+      expect(scene.state.player.visible).toBe(false);
+      gsap.getTweensOf(scene.state)[0].progress(1);
+      expect(scene.state.player.visible).toBe(true);
+      expect(scene.state.player.u).toBeCloseTo(INTRO_ENTRY.u);
+      expect(scene.state.camMode).toBe("follow");
+      expect(onDone).not.toHaveBeenCalled();
+      run(scene, 10);
+      expect(onDone).toHaveBeenCalledTimes(1);
+      expect(scene.state.player.u).toBeCloseTo(SPAWN.u, 0);
+      expect(REVEAL_DURATION).toBeGreaterThan(1);
+      scene.destroy();
+    });
+
+    it("skipIntro() mid-intro restores the final state and never calls onDone", () => {
+      const { scene } = make({ intro: true, reduced: false });
+      const onDone = vi.fn();
+      scene.intro({ onDone });
+      gsap.getTweensOf(scene.state)[0].progress(1);
+      run(scene, 0.5);
+      scene.skipIntro();
+      expectFinal(scene);
+      expect(scene.cam.zoom).toBeCloseTo(scene.state.fitZoom * FOLLOW_ZOOM);
+      run(scene, 10);
+      expect(onDone).not.toHaveBeenCalled();
+      scene.destroy();
+    });
+
+    it("skipIntro() before intro() also lands on the final state; afterwards it is a no-op", () => {
+      const { scene } = make({ intro: true });
+      scene.skipIntro();
+      expectFinal(scene);
+      scene.placePlayer({ u: -8, v: 2 });
+      scene.skipIntro();
+      expect(scene.state.player.u).toBe(-8);
+    });
+
+    it("finishing the intro does not enable input by itself", () => {
+      const { scene, onServe } = make({ intro: true });
+      const onDone = vi.fn();
+      scene.intro({ onDone });
+      expect(onDone).toHaveBeenCalled();
+      expect(scene.jump()).toBe(false);
+      scene.setPointer(screenOf(scene, 3, -2));
+      scene.step(1 / 60);
+      expect(scene.state.aim).toBeNull();
+      expect(scene.serve()).toBe(false);
+      expect(onServe).not.toHaveBeenCalled();
+      scene.setInputEnabled(true);
+      scene.step(1 / 60);
+      expect(scene.serve()).toBe(true);
+    });
+
+    it("walkTo arrival enables nothing by itself", () => {
+      const { scene } = make();
+      scene.setInputEnabled(false);
+      const onArrive = vi.fn();
+      scene.walkTo({ u: -10, v: 0 }, onArrive);
+      run(scene, 4);
+      expect(onArrive).toHaveBeenCalled();
+      expect(scene.jump()).toBe(false);
+    });
   });
 });
