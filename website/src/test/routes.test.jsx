@@ -20,6 +20,13 @@ vi.mock('../lib/reviewsApi', () => ({
   signOutOwner: vi.fn(),
 }))
 
+// jsdom has no canvas or WebGL. The isometric court is a visual surface with
+// its own unit tests (src/iso/*.test.js); here it is a stub so the route table
+// renders real section content.
+vi.mock('../components/iso/IsoCourt', () => ({
+  default: () => <canvas data-testid="iso-court" aria-hidden="true" />,
+}))
+
 // jsdom does not implement window.matchMedia. usePrefersReducedMotion (used by
 // CourtStage and Hud) calls it unconditionally in an effect, and framer-motion
 // independently probes it (via the legacy addListener/removeListener API) the
