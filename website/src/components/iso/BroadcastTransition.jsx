@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef } from "react";
+import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 
 // The ESPN-style hand-off between the court and a section: a slam caption, a
@@ -18,6 +18,13 @@ const BroadcastTransition = forwardRef(({ section }, ref) => {
   const ticker = useRef(null);
   const flash = useRef(null);
 
+  // Park the panels off-screen through GSAP rather than inline CSS: GSAP reads
+  // an inline translateX(-130%) back as a pixel `x`, which a later xPercent
+  // tween would not cancel — the panels would end up parked over the content.
+  useLayoutEffect(() => {
+    gsap.set(panels.current.filter(Boolean), { xPercent: -130, skewX: -14 });
+  }, []);
+
   useImperativeHandle(ref, () => ({
     getEls: () => ({
       vignette: vignette.current,
@@ -29,15 +36,18 @@ const BroadcastTransition = forwardRef(({ section }, ref) => {
   }));
 
   return (
-    <div className="fixed inset-0 z-30 pointer-events-none overflow-hidden" aria-hidden="true">
+    <>
+      {/* The vignette dims the court behind the content, so it sits below z-20. */}
       <div
         ref={vignette}
-        className="absolute inset-0 opacity-0"
+        className="fixed inset-0 z-10 pointer-events-none opacity-0"
+        aria-hidden="true"
         style={{
           background:
             "radial-gradient(ellipse at center, rgba(24,27,24,0.45) 0%, rgba(24,27,24,0.92) 100%)",
         }}
       />
+    <div className="fixed inset-0 z-30 pointer-events-none overflow-hidden" aria-hidden="true">
 
       <div
         ref={slam}
@@ -63,7 +73,7 @@ const BroadcastTransition = forwardRef(({ section }, ref) => {
           key={color}
           ref={(el) => (panels.current[i] = el)}
           className="absolute top-0 bottom-0 w-[130vw] -left-[15vw] overflow-hidden"
-          style={{ background: color, transform: "skewX(-14deg) translateX(-130%)" }}
+          style={{ background: color, transform: "translateX(-130%) skewX(-14deg)" }}
         >
           {i === 1 && (
             <div
@@ -79,6 +89,7 @@ const BroadcastTransition = forwardRef(({ section }, ref) => {
 
       <div ref={flash} className="absolute inset-0 bg-white opacity-0" />
     </div>
+    </>
   );
 });
 BroadcastTransition.displayName = "BroadcastTransition";
@@ -90,7 +101,9 @@ export default BroadcastTransition;
 // set) so reverse restores the exact start state.
 export function buildTransition({ els, cam, focus, zoomFactor = 3, content, card, reduced }) {
   const d = (seconds) => (reduced ? 0 : seconds);
-  const tl = gsap.timeline({ paused: true, defaults: { overwrite: "auto" } });
+  // No overwrite mode: every tween here is sequenced, and "auto" would kill
+  // the sweep-in's xPercent so the panels could never travel back on reverse.
+  const tl = gsap.timeline({ paused: true });
   const { vignette, slam, panels, ticker, flash } = els;
   const from = { x: cam.x, y: cam.y, zoom: cam.zoom };
 
@@ -108,7 +121,7 @@ export function buildTransition({ els, cam, focus, zoomFactor = 3, content, card
 
   // Panels sweep in (purple leads).
   panels.forEach((panel, i) => {
-    tl.fromTo(panel, { xPercent: -130, skewX: -14 }, { xPercent: 0, skewX: -14, duration: d(0.45), ease: "power4.inOut" }, d(0.7 + i * 0.07));
+    tl.fromTo(panel, { xPercent: -130, x: 0, skewX: -14 }, { xPercent: 0, x: 0, skewX: -14, duration: d(0.45), ease: "power4.inOut" }, d(0.7 + i * 0.07));
   });
   if (ticker) tl.fromTo(ticker, { x: 0 }, { x: -480, duration: d(0.5), ease: "power2.out" }, d(1.0));
 
