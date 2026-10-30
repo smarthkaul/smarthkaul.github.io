@@ -11,6 +11,16 @@ export default {
         sans: ["Inter", "system-ui", "Avenir", "Helvetica", "Arial", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
+      // Type scale: display (Syne 800, tight) → heading (Syne 700) → body (Inter)
+      // → label (mono caps, wide). These name the two ends of the tracking range
+      // and the label size so every eyebrow/badge/metadata line matches.
+      fontSize: {
+        label: ["0.6875rem", { lineHeight: "1rem" }],
+      },
+      letterSpacing: {
+        display: "-0.02em",
+        eyebrow: "0.18em",
+      },
       colors: {
         grass: {
           light: "#3aa65c",
