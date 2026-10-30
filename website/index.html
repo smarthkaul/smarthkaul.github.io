@@ -39,6 +39,18 @@
         }
       })(window.location);
     </script>
+
+    <!-- Google Analytics (GA4). Kept after the SPA shim above so the first
+         page_view records the restored deep-link path, not the 404 redirect.
+         Route changes are picked up by GA4's "page changes based on browser
+         history events" enhanced measurement, not by the app. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SQD2PZ8B58"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-SQD2PZ8B58');
+    </script>
   </head>
   <body>
     <div id="root"></div>
