@@ -33,6 +33,7 @@ const focusHeading = (node) => {
   const heading = node?.querySelector("h2, h1");
   if (heading) {
     heading.setAttribute("tabindex", "-1");
+    heading.style.outline = "none"; // programmatic focus, not a keyboard tab stop
     heading.focus({ preventScroll: true });
   }
 };
