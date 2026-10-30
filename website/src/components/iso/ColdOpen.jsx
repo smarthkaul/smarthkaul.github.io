@@ -216,7 +216,7 @@ const ColdOpen = ({ scene = null, onDone }) => {
       <button
         type="button"
         onClick={skip}
-        className="absolute top-4 right-4 z-20 font-mono text-cream/80 hover:text-ball text-xs uppercase tracking-widest"
+        className="absolute bottom-6 right-6 z-20 font-mono text-cream/80 hover:text-ball text-xs uppercase tracking-widest text-shadow-broadcast"
         style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
       >
         Skip &#9656;

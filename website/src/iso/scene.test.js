@@ -350,10 +350,15 @@ describe("scene", () => {
       gsap.getTweensOf(scene.state)[0].progress(1);
       expect(scene.state.player.visible).toBe(true);
       expect(scene.state.player.u).toBeCloseTo(INTRO_ENTRY.u);
-      expect(scene.state.camMode).toBe("follow");
+      expect(scene.state.camMode).toBe("intro");
+      // The crane starts on the overview and tightens as he walks, never
+      // running off to meet him at the entry point.
+      scene.step(1 / 60);
+      expect(scene.cam.zoom).toBeLessThan(scene.state.fitZoom * 1.1);
       expect(onDone).not.toHaveBeenCalled();
       run(scene, 10);
       expect(onDone).toHaveBeenCalledTimes(1);
+      expect(scene.state.camMode).toBe("follow");
       expect(scene.state.player.u).toBeCloseTo(SPAWN.u, 0);
       expect(REVEAL_DURATION).toBeGreaterThan(1);
       scene.destroy();

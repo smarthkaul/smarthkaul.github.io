@@ -30,7 +30,9 @@ export const INTRO_ENTRY = { u: SPAWN.u - 4, v: SPAWN.v - 16 };
 export const INTRO_WALK_SPEED = 0.6; // × WALK_SPEED
 
 export { FOLLOW_ZOOM, BALL_ZOOM, PAN_RATE, ZOOM_RATE, LOOK_AHEAD, BALL_HOLD } from "./projection";
-export const CAMERA_MODES = ["follow", "ball", "fit"];
+// 'intro' is the cold-open crane: it blends from the fit framing to the follow
+// framing as the player walks in, so the camera never runs off to meet him.
+export const CAMERA_MODES = ["follow", "ball", "fit", "intro"];
 
 export function createScene({ canvas, images = {}, reduced = false, topInset = 0, intro = false, onLand, onServe }) {
   const ctx = canvas.getContext ? canvas.getContext("2d") : null;
@@ -57,6 +59,7 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   let tapAim = null;      // { u, v } world aim set by a touch tap
   let autoWalk = null;    // { u, v } tap target to walk toward, then serve
   let script = null;      // { u, v, onArrive, speed } walkTo() target — no serve, no clamp
+  let introDist = 0;      // walk-in length, for the 'intro' camera blend
   let stuckTime = 0;
   let inputEnabled = !intro;
   let introPhase = intro ? "pending" : "done"; // pending | running | done
@@ -94,24 +97,38 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
   };
 
   // Where the camera wants to be in the current mode.
+  const followTarget = () => {
+    const p = state.player;
+    const zoom = state.fitZoom * FOLLOW_ZOOM;
+    const a = state.aim;
+    const u = a ? p.u + (a.u - p.u) * LOOK_AHEAD : p.u;
+    const v = a ? p.v + (a.v - p.v) * LOOK_AHEAD : p.v;
+    const pt = project(u, v, FOLLOW_LIFT);
+    return { x: pt.x, y: pt.y - topInset / (2 * zoom), zoom };
+  };
   const cameraTarget = () => {
     const mode = state.camMode;
     if (mode === "fit") return fitCam;
-    let zoom;
-    let pt;
     if (mode === "ball") {
       const b = state.ball;
-      zoom = state.fitZoom * BALL_ZOOM;
-      pt = project(b.u, b.v, b.z * 0.5);
-    } else {
-      const p = state.player;
-      zoom = state.fitZoom * FOLLOW_ZOOM;
-      const a = state.aim;
-      const u = a ? p.u + (a.u - p.u) * LOOK_AHEAD : p.u;
-      const v = a ? p.v + (a.v - p.v) * LOOK_AHEAD : p.v;
-      pt = project(u, v, FOLLOW_LIFT);
+      const zoom = state.fitZoom * BALL_ZOOM;
+      const pt = project(b.u, b.v, b.z * 0.5);
+      return { x: pt.x, y: pt.y - topInset / (2 * zoom), zoom };
     }
-    return { x: pt.x, y: pt.y - topInset / (2 * zoom), zoom };
+    if (mode === "intro") {
+      // Crane-in: overview → follow, eased by how far along the walk he is.
+      const f = followTarget();
+      const p = state.player;
+      const d = Math.hypot(SPAWN.u - p.u, SPAWN.v - p.v);
+      const k = introDist > 0 ? Math.min(1, Math.max(0, 1 - d / introDist)) : 1;
+      const e = k * k * (3 - 2 * k);
+      return {
+        x: fitCam.x + (f.x - fitCam.x) * e,
+        y: fitCam.y + (f.y - fitCam.y) * e,
+        zoom: fitCam.zoom + (f.zoom - fitCam.zoom) * e,
+      };
+    }
+    return followTarget();
   };
 
   const snapCamera = () => {
@@ -497,9 +514,11 @@ export function createScene({ canvas, images = {}, reduced = false, topInset = 0
       introTween = null;
       placePlayer(INTRO_ENTRY);
       state.player.visible = true;
-      setCameraMode("follow");
+      introDist = Math.hypot(SPAWN.u - INTRO_ENTRY.u, SPAWN.v - INTRO_ENTRY.v);
+      setCameraMode("intro");
       walkTo(SPAWN, () => {
         introPhase = "done";
+        setCameraMode("follow");
         onDone?.();
       }, { speed: INTRO_WALK_SPEED });
     };
