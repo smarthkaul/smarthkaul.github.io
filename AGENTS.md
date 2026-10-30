@@ -189,6 +189,13 @@ If you re-cut the character in Figma and get masked SVGs again, rasterize before
 
 where `part.html` is a bare page containing just `<img src="part.svg">` sized to the same dimensions. The natural sizes are already several times the on-screen size (a 46-unit-wide head renders at ~57 CSS px), so 1× is plenty — don't render at 2×. The original masked SVGs remain in git history if you ever need them back.
 
+## Analytics
+
+Google Analytics 4 (measurement ID `G-SQD2PZ8B58`) is loaded by the standard `gtag.js` snippet in `website/index.html`. Two things to keep in mind:
+
+- **It must sit after the SPA redirect shim** in `<head>`, so the first `page_view` records the restored deep-link path rather than the `/?/...` form that `404.html` hands over.
+- **The app sends no page views itself.** Route changes are tracked by GA4's enhanced measurement ("Page changes based on browser history events", on by default in the GA data stream settings). If that toggle is ever turned off, client-side navigations stop being counted — don't add a manual `gtag('event', 'page_view')` on route change without turning it off, or every navigation is double-counted.
+
 ## Social preview (Open Graph)
 
 `website/index.html` carries the Open Graph and Twitter-card tags that build the preview box shown when the site is linked on LinkedIn, Slack, iMessage, X, or Discord. Two rules make or break this:
